@@ -1,22 +1,29 @@
 import { Game } from 'boardgame.io/core';
 import { Client } from 'boardgame.io/react';
 import { RiskGameBoard } from './RiskGameBoard';
+import { worldMap } from './maps/worldmap';
 
 // Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
   // TODO
   return false;  
 }
+const gameMap = worldMap;
 
 const RiskGame = Game({
-  setup: () => ({
-    countries: Array(50).fill({owner: null, soldiers: 0}),
-    unassignedUnits: {0: 20, 1: 20}
- }),
+  setup: () => {
+
+    const countries = {};
+    Object.keys(gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
+    return {
+    countries: countries,
+    unassignedUnits: {0: 25, 1: 25}
+  }
+},
 
   moves: {
     occupyCountry(G, ctx, id) {
-      const countries = [ ...G.countries ];
+      const countries = {...G.countries};
       const unassignedUnits = {...G.unassignedUnits};
 
       // Ensure we can't overwrite countries.
@@ -29,8 +36,8 @@ const RiskGame = Game({
     },
 
     reinforceCountry(G, ctx, id) {
-      const countries = [ ...G.countries ];
-      const unassignedUnits = {...G.unassignedUnits};
+      const countries = {...G.countries};
+      const unassignedUnits = clone(G.unassignedUnits);
 
       // Ensure we can't overwrite countries.
       if (countries[id].owner === ctx.currentPlayer && unassignedUnits[ctx.currentPlayer] > 0) {
@@ -57,7 +64,9 @@ const RiskGame = Game({
       {
         name: "Occupation",
         allowedMoves: ['occupyCountry'],
-        endPhaseIf: (G, ctx) => G.countries.filter((c) => c.owner === null).length === 0,
+        
+        // end phase if there are no more countries with owner = null
+        endPhaseIf: (G, ctx) => Object.keys(G.countries).filter((key) => G.countries[key].owner === null).length === 0,
       },
 
       {
@@ -76,6 +85,11 @@ const RiskGame = Game({
     ]
   },
 });
+
+// hack for cloning dictionaries (that have no functions)
+function clone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
 
 const App = Client({ game: RiskGame, board: RiskGameBoard });
 
