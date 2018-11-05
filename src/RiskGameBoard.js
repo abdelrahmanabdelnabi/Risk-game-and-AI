@@ -1,8 +1,16 @@
 import React from 'react';
 import { SvgImage } from './SvgImage';
+import { worldMap } from './maps/worldmap';
 
 export class RiskGameBoard extends React.Component {
-  onClick(id) {
+  
+  // This handler gets called whenever a territory is clicked
+  handleClick(territoryId) {
+    const id = territoryId.split("_")[1];
+    const type = territoryId.split("_")[0];
+    
+    if(type !== 'Territory')
+      return;
     if (this.props.ctx.phase === 'Occupation') {
       if (this._canOccupy(id)) {
         this.props.moves.occupyCountry(id);
@@ -20,20 +28,14 @@ export class RiskGameBoard extends React.Component {
     }
   }
 
+  // returns true if current player can reinforce the country with the specified id
   _canReinforce(id) {
     return this.props.G.countries[id].owner === this.props.ctx.currentPlayer;
   }
 
+  // returns true if current player can occupy the country with the specified id
   _canOccupy(id) {
     return this.props.G.countries[id].owner === null;
-  }
-
-  playerBgColor(playerNum) {
-    switch(playerNum) {
-      case "0": return "red";
-      case "1": return "blue";
-      default: return "transparent";
-    }
   }
 
   render() {
@@ -46,38 +48,20 @@ export class RiskGameBoard extends React.Component {
           <div id="winner">Draw!</div>
         );
     }
-
-    const cellStyle = {
-      border: '1px solid #555',
-      width: '50px',
-      height: '50px',
-      lineHeight: '50px',
-      textAlign: 'center',
-    };
-
-    let tbody = [];
-    for (let i = 0; i < 3; i++) {
-      let cells = [];
-      for (let j = 0; j < 3; j++) {
-        const id = 3 * i + j;
-        cells.push(
-          <td style={{...cellStyle, "backgroundColor":this.playerBgColor(this.props.G.countries[id].owner)}} key={id} onClick={() => this.onClick(id)}>
-            {this.props.G.countries[id].soldiers}
-          </td>
-        );
-      }
-      tbody.push(<tr key={i}>{cells}</tr>);
-    }
-
+    
     return (
-      <div>
-        <table id="board">
-          <tbody>{tbody}</tbody>
-        </table>
+      <div style={{margin: "20px 20px 20px 20px"}}>
         {winner}
-        <SvgImage path={'logo.svg'}/>
+        <SvgImage countries={this.props.G.countries} image={worldMap.image} names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
       </div>
     );
   }
 };
 
+export function playerTerritoryColor(playerNum) {
+  switch(playerNum) {
+    case "0": return "red";
+    case "1": return "blue";
+    default: return "rgb(200,200,200)";
+  }
+};

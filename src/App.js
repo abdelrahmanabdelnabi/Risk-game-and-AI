@@ -2,23 +2,22 @@ import { Game } from 'boardgame.io/core';
 import { Client } from 'boardgame.io/react';
 import { RiskGameBoard } from './RiskGameBoard';
 
-
 // Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
+  // TODO
   return false;  
 }
 
 const RiskGame = Game({
   setup: () => ({
-    countries: Array(9).fill({owner: null, soldiers: 0}),
-    unassignedUnits: {0: 10, 1: 10}
+    countries: Array(50).fill({owner: null, soldiers: 0}),
+    unassignedUnits: {0: 20, 1: 20}
  }),
 
   moves: {
     occupyCountry(G, ctx, id) {
       const countries = [ ...G.countries ];
       const unassignedUnits = {...G.unassignedUnits};
-
 
       // Ensure we can't overwrite countries.
       if (countries[id].owner === null && unassignedUnits[ctx.currentPlayer] > 0) {
@@ -43,7 +42,7 @@ const RiskGame = Game({
     },
 
     attack(G, ctx, sourceId, destId) {
-
+      // TODO
     }
   },
 
@@ -77,6 +76,7 @@ const RiskGame = Game({
     ]
   },
 });
+
 const App = Client({ game: RiskGame, board: RiskGameBoard });
 
 export default App;
