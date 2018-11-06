@@ -8,18 +8,26 @@ function IsVictory(countries) {
   // TODO
   return false;  
 }
+
 const gameMap = worldMap;
+const numPlayers = 3;
+const unitsPerPlayer = 20
 
 const RiskGame = Game({
   setup: () => {
 
     const countries = {};
     Object.keys(gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
+    const unassignedUnits = {};
+
+    for(var i = 0; i < numPlayers; i++)
+      unassignedUnits[i] = unitsPerPlayer;
+
     return {
-    countries: countries,
-    unassignedUnits: {0: 25, 1: 25}
-  }
-},
+      countries: countries,
+      unassignedUnits: unassignedUnits
+    }
+  },
 
   moves: {
     occupyCountry(G, ctx, id) {
@@ -37,7 +45,7 @@ const RiskGame = Game({
 
     reinforceCountry(G, ctx, id) {
       const countries = {...G.countries};
-      const unassignedUnits = clone(G.unassignedUnits);
+      const unassignedUnits = {...G.unassignedUnits};
 
       // Ensure we can't overwrite countries.
       if (countries[id].owner === ctx.currentPlayer && unassignedUnits[ctx.currentPlayer] > 0) {
@@ -60,10 +68,22 @@ const RiskGame = Game({
       }
     },
 
+    turnOrder: {
+      // a custom turn order to reset the playOrderPos on the start of each phase
+      // boardgame.io seems to always get the next player after the one returned by first,
+      // so this is a hack to solve this issue
+      first: () => numPlayers - 1,
+      next: (G, ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers,
+    },
+
     phases: [
       {
         name: "Occupation",
         allowedMoves: ['occupyCountry'],
+        turnOrder: {
+          first: () => 0,
+          next: (G, ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers,
+        },
         
         // end phase if there are no more countries with owner = null
         endPhaseIf: (G, ctx) => Object.keys(G.countries).filter((key) => G.countries[key].owner === null).length === 0,
@@ -72,25 +92,19 @@ const RiskGame = Game({
       {
         name: "Reinforce Countries",
         allowedMoves: ['reinforceCountry'],
-        onPhaseBegin: (G, ctx) => {ctx.playOrderPos = 0; return G},
-
         // end phase if the total number of unassigned units is zero
         endPhaseIf: (G, ctx) => Object.keys(G.unassignedUnits).reduce((total, key) => total + +G.unassignedUnits[key], 0) === 0
       },
 
-      {
+      {     
         name: "war",
-        allowedMoves: ['attack']
+        allowedMoves: ['attack'],
       }
     ]
   },
 });
 
-// hack for cloning dictionaries (that have no functions)
-function clone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
 
-const App = Client({ game: RiskGame, board: RiskGameBoard });
+const App = Client({ game: RiskGame, board: RiskGameBoard, numPlayers: numPlayers });
 
 export default App;

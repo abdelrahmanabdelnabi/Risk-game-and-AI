@@ -62,6 +62,7 @@ export function playerTerritoryColor(playerNum) {
   switch(playerNum) {
     case "0": return "red";
     case "1": return "blue";
+    case "2": return "yellow";
     default: return "rgb(200,200,200)";
   }
 };
