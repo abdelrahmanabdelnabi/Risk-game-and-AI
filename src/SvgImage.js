@@ -57,21 +57,26 @@ class ReactPath extends React.Component {
   }
 
   render() {
-    if(this.props.id.split("_")[0] === "Territory") {
+    var className= "non-territory";
+    const isTerritory = this.props.id.split("_")[0] === "Territory";
+    
+    if(isTerritory) {
       this.props.style.fill =  playerTerritoryColor(this.props.state.owner);
       if(this.state.hover)
         this.props.style.strokeWidth = 3
       else
         this.props.style.strokeWidth = 1;
+      
+      className = "territory";
     }
  
     const customStyle = {...this.props.style};
 
     return (
-      <path d={this.props.d} style={customStyle} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
+      <path d={this.props.d} style={customStyle} className={className} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
 
-        // uncommenting this causes a significant increase in cpu usage
-        /* onMouseEnter={() => this.onMouseEnter()} onMouseLeave={() => this.onMouseLeave()} */ >
+        // next line causes a significant increase in cpu usage
+        onMouseEnter={() => this.onMouseEnter()} onMouseLeave={() => this.onMouseLeave()} >
         <title>
           {this.props.name}
         </title>

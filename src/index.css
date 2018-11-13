@@ -13,10 +13,7 @@ code {
     monospace;
 }
 
-/* svg text{
-  visibility:hidden;
-}
-
-svg path:hover + text{
-  visibility:visible;
+/* .territory:hover {
+  stroke-width: 2;
+  stroke: rgb(255, 0, 0);
 } */
