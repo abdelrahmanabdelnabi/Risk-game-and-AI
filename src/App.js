@@ -99,11 +99,26 @@ const RiskGame = Game({
       {     
         name: "war",
         allowedMoves: ['attack'],
+        
+        // give the current player his new units on the beginning of each turn
+        onTurnBegin: (G, ctx) => {
+          var currentPlayer = ctx.currentPlayer;
+
+          var numOwnedCountries =
+          Object.keys(G.countries)
+          .reduce((count, key) => count + (G.countries[key].owner === currentPlayer ? 1 : 0), 0);
+
+          console.log(numOwnedCountries);
+
+          const unassignedUnits = {...G.unassignedUnits};
+          unassignedUnits[currentPlayer] += Math.max(Math.floor(numOwnedCountries / 3), 3);
+
+          return {...G, unassignedUnits}
+        }
       }
     ]
   },
 });
-
 
 const App = Client({ game: RiskGame, board: RiskGameBoard, numPlayers: numPlayers });
 
