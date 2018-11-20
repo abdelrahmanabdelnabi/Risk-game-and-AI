@@ -6,7 +6,7 @@ import { worldMap } from './maps/worldmap';
 // Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
   // TODO
-  return false;  
+  return false;
 }
 
 const gameMap = worldMap;
@@ -84,7 +84,7 @@ const RiskGame = Game({
           first: () => 0,
           next: (G, ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers,
         },
-        
+
         // end phase if there are no more countries with owner = null
         endPhaseIf: (G, ctx) => Object.keys(G.countries).filter((key) => G.countries[key].owner === null).length === 0,
       },
@@ -96,10 +96,10 @@ const RiskGame = Game({
         endPhaseIf: (G, ctx) => Object.keys(G.unassignedUnits).reduce((total, key) => total + +G.unassignedUnits[key], 0) === 0
       },
 
-      {     
+      {
         name: "war",
         allowedMoves: ['attack'],
-        
+
         // give the current player his new units on the beginning of each turn
         onTurnBegin: (G, ctx) => {
           var currentPlayer = ctx.currentPlayer;

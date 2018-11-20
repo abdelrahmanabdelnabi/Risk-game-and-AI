@@ -3,12 +3,12 @@ import { SvgImage } from './SvgImage';
 import { worldMap } from './maps/worldmap';
 
 export class RiskGameBoard extends React.Component {
-  
+
   // This handler gets called whenever a territory is clicked
   handleClick(territoryId) {
     const id = territoryId.split("_")[1];
     const type = territoryId.split("_")[0];
-    
+
     if(type !== 'Territory')
       return;
     if (this.props.ctx.phase === 'Occupation') {
