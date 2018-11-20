@@ -39,19 +39,8 @@ export class RiskGameBoard extends React.Component {
   }
 
   render() {
-    let winner = '';
-    if (this.props.ctx.gameover) {
-      winner =
-        this.props.ctx.gameover.winner !== undefined ? (
-          <div id="winner">Winner: {this.props.ctx.gameover.winner}</div>
-        ) : (
-          <div id="winner">Draw!</div>
-        );
-    }
-    
     return (
       <div style={{margin: "20px 20px 20px 20px"}}>
-        {winner}
         <SvgImage countries={this.props.G.countries} image={worldMap.image} names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
       </div>
     );
