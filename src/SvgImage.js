@@ -1,10 +1,10 @@
 import React from 'react';
-import { playerTerritoryColor } from './RiskGameBoard';
+import { playerTerritoryColor, AttackingStateEnum } from './RiskGameBoard';
 
 export class SvgImage extends React.Component {
   constructor(props) {
     super(props);
-    var parsedDoc = new DOMParser().parseFromString(props.image, 'text/html');
+    var parsedDoc = new DOMParser().parseFromString(props.map.image, 'text/html');
     this.state = {paths: parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path')};
   }
 
@@ -25,8 +25,16 @@ export class SvgImage extends React.Component {
       const countryState = path.id.split("_")[0] === 'Territory' ? this.props.countries[idNum] : null;
       const countryName = path.id.split("_")[0] === 'Territory' ? this.props.names[idNum] : null;
 
+      var attackState = AttackingStateEnum.normal;
+
+      if(this.props.attackingCountry === idNum)
+        attackState = AttackingStateEnum.attacking;
+      else if(this.props.defendingCountries.indexOf(+idNum) > -1)
+        attackState = AttackingStateEnum.being_attacked;
+
       return (
-        <ReactPath state={countryState} key={path.id} d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
+        <ReactPath state={countryState} attackState={attackState} key={path.id}
+         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
       );
     });
 
@@ -61,13 +69,23 @@ class ReactPath extends React.Component {
     const isTerritory = this.props.id.split("_")[0] === "Territory";
     
     if(isTerritory) {
+      className = "territory";
+
       this.props.style.fill =  playerTerritoryColor(this.props.state.owner);
       if(this.state.hover)
         this.props.style.strokeWidth = 3
       else
         this.props.style.strokeWidth = 1;
-      
-      className = "territory";
+
+      if (this.props.attackState === AttackingStateEnum.attacking) {
+        // we are the selected attacking territory: apply a differenet styling
+        this.props.style.fillOpacity = 0.5;
+        className += " attacking";
+      } else if (this.props.attackState === AttackingStateEnum.being_attacked) {
+        this.props.style.strokeWidth = 4;
+        this.props.style.stroke = "rgb(80,255,0)";
+        className += " defending";
+      }
     }
  
     const customStyle = {...this.props.style};
@@ -85,4 +103,3 @@ class ReactPath extends React.Component {
   }
 
 }
-

@@ -6,6 +6,11 @@ import {AI_SERVER_REQUEST_URL} from './App';
 
 export class RiskGameBoard extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {selectedCountry: null};
+  }
+
   componentDidUpdate() {
     // check if the current player is an AI
     // if true, send a request to the AI server and simulate
@@ -79,7 +84,41 @@ export class RiskGameBoard extends React.Component {
       } else {
         alert("can't reinforce a country you don't occupy");
       }
+    } else if (this.props.ctx.phase === 'War') {
+      if (this.state.selectedCountry) {
+        if(this._canAttack(this.state.selectedCountry, id)) {
+          // perform attack
+          this.props.moves.attack(this.props.selectedCountry, id);
+          this.props.events.endTurn();
+          this.setState({...this.state, selectedCountry: null});
+        } else {
+          alert("you can't attack " + worldMap.countryName[id])
+        }
+      } else {
+        // check if valid selection first
+        if (this.props.G.countries[id].owner === this.props.ctx.currentPlayer)
+          this.setState({...this.state, selectedCountry: id})
+        else {
+          alert("you can't attack with " + worldMap.countryName[id] + ". You don't own this country.");
+        }
+      }
     }
+  }
+
+  _canAttack(sourceId, destId) {
+    const isNeighbor = worldMap.adjacencyList[sourceId].indexOf(+destId) > -1;
+    const isEnemy = this.props.G.countries[sourceId].owner !== this.props.G.countries[destId].owner;
+    return isNeighbor && isEnemy;
+  }
+
+  // returns neighbouring enemy countries
+  _getDefendingCountries(attackingCountry) {
+    if(!attackingCountry)
+      return [];
+
+    const currPlayer = this.props.ctx.currentPlayer;
+    const neighbors = worldMap.adjacencyList[attackingCountry];
+    return neighbors.filter(neighbor => this.props.G.countries[neighbor].owner !== currPlayer);
   }
 
   // returns true if current player can reinforce the country with the specified id
@@ -95,7 +134,9 @@ export class RiskGameBoard extends React.Component {
   render() {
     return (
       <div style={{margin: "20px 20px 20px 20px"}}>
-        <SvgImage countries={this.props.G.countries} image={worldMap.image} names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
+        <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
+        defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={worldMap}
+        names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
       </div>
     );
   }
@@ -109,3 +150,5 @@ export function playerTerritoryColor(playerNum) {
     default: return "rgb(200,200,200)";
   }
 };
+
+export const AttackingStateEnum = Object.freeze({"normal":1, "attacking":2, "being_attacked":3});
