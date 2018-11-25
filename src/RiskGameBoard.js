@@ -1,8 +1,62 @@
 import React from 'react';
 import { SvgImage } from './SvgImage';
 import { worldMap } from './maps/worldmap';
+import axios from 'axios';
+import {AI_SERVER_REQUEST_URL} from './App';
 
 export class RiskGameBoard extends React.Component {
+
+  componentDidUpdate() {
+    // check if the current player is an AI
+    // if true, send a request to the AI server and simulate
+    // the move returned by the AI server when the response is received
+
+    // assumes player 1 is a greedy AI agent (for testing only)
+    if (this.props.ctx.currentPlayer === 1 && !this.state.aiMoves) {
+      const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "greedy"};
+      axios.create( {
+        url: `${AI_SERVER_REQUEST_URL}`,
+        method: "get",
+        data: data,
+      })
+      .then(response => {
+          this.handleAIMovesReceived(response);
+      })
+      .catch(error => alert(error))
+    }
+  }
+
+  handleAIMovesResponse(response) {
+    if (response.status !== 200) {
+      alert("Error in AI server, response code: " + response.status + ". Response text: " + response.statusText);
+      console.log(response.data);
+    }
+
+    const moves = response.data.moves;
+    this.setState({...this.state, aiMoves: moves});
+    this.simulateAIMoves();
+  }
+
+  simulateAIMoves() {
+    const moves = this.state.aiMoves;
+    for(var i = 0; i < moves.length; i++) {
+      const move = moves[i];
+
+      if (move.name === "attack") {
+        const sourceId = move.sourceId;
+        const destId = move.destId;
+
+        this.props.moves.attack(sourceId, destId);
+      } else if (move.name === "reinforce") {
+        const sourceId = move.sourceId;
+        this.props.moves.reinforceCountry(sourceId);
+      } else if (move.name === "fortify") {
+        // not yet implemented
+      }
+    }
+    this.setState({...this.state, aiMoves: null})
+    this.props.events.endTurn();
+  }
 
   // This handler gets called whenever a territory is clicked
   handleClick(territoryId) {

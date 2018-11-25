@@ -8,7 +8,7 @@ import math
 app = Flask(__name__)
 
 
-@app.route('/solve', methods=['GET'])
+@app.route('/solve', methods=['POST'])
 def solve():
 	print(request.get_json())
 	data = request.get_json()
