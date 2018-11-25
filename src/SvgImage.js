@@ -69,6 +69,8 @@ class ReactPath extends React.Component {
     const isTerritory = this.props.id.split("_")[0] === "Territory";
     
     if(isTerritory) {
+      className = "territory";
+
       this.props.style.fill =  playerTerritoryColor(this.props.state.owner);
       if(this.state.hover)
         this.props.style.strokeWidth = 3
@@ -77,14 +79,13 @@ class ReactPath extends React.Component {
 
       if (this.props.attackState === AttackingStateEnum.attacking) {
         // we are the selected attacking territory: apply a differenet styling
-        this.props.style.strokeWidth = 3;
-        this.props.style.stroke = "rgb(0,255,0)";
+        this.props.style.fillOpacity = 0.5;
+        className += " attacking";
       } else if (this.props.attackState === AttackingStateEnum.being_attacked) {
-        this.props.style.strokeWidth = 3;
-        this.props.style.stroke = "rgb(255,0,0)";
+        this.props.style.strokeWidth = 4;
+        this.props.style.stroke = "rgb(80,255,0)";
+        className += " defending";
       }
-      
-      className = "territory";
     }
  
     const customStyle = {...this.props.style};

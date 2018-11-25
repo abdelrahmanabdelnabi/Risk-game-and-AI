@@ -32,15 +32,30 @@ export class RiskGameBoard extends React.Component {
       }
     } else if (this.props.ctx.phase === 'War') {
       if (this.state.selectedCountry) {
-        // perform attack
-        // this.props.moves.attack(this.props.selectedCountry, id);
-        this.props.events.endTurn();
-        this.setState({...this.state, selectedCountry: null});
+        if(this._canAttack(this.state.selectedCountry, id)) {
+          // perform attack
+          this.props.moves.attack(this.props.selectedCountry, id);
+          this.props.events.endTurn();
+          this.setState({...this.state, selectedCountry: null});
+        } else {
+          alert("you can't attack " + worldMap.countryName[id])
+        }
+        
       } else {
         // check if valid selection first
-        this.setState({...this.state, selectedCountry: id})
+        if (this.props.G.countries[id].owner === this.props.ctx.currentPlayer)
+          this.setState({...this.state, selectedCountry: id})
+        else {
+          alert("you can't attack with " + worldMap.countryName[id] + ". You don't own this country.");
+        }
       }
     }
+  }
+
+  _canAttack(sourceId, destId) {
+    const isNeighbor = worldMap.adjacencyList[sourceId].indexOf(+destId) > -1;
+    const isEnemy = this.props.G.countries[sourceId].owner !== this.props.G.countries[destId].owner;
+    return isNeighbor && isEnemy;
   }
 
   // returns neighbouring enemy countries

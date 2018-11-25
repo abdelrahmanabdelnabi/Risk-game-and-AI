@@ -18,6 +18,16 @@
   color: white;
 }
 
+.attacking {
+  stroke: rgb(0,255,0);
+  stroke-width: 3;
+}
+
+.defending {
+  stroke: rgb(255,0,0);
+  stroke-width: 3;
+}
+
 .App-link {
   color: #61dafb;
 }
