@@ -9,19 +9,24 @@ function IsVictory(countries) {
   return false;
 }
 
-const gameMap = worldMap;
-const numPlayers = 3;
-const unitsPerPlayer = 20
+const gameOptions = {
+  gameMap: worldMap,
+  players: ["human", "greedy"],
+  unitsPerPlayer: 20,
+  useDice: false
+};
+
+const numPlayers = gameOptions.players.length;
 
 const RiskGame = Game({
   setup: () => {
 
     const countries = {};
-    Object.keys(gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
+    Object.keys(gameOptions.gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
     const unassignedUnits = {};
 
     for(var i = 0; i < numPlayers; i++)
-      unassignedUnits[i] = unitsPerPlayer;
+      unassignedUnits[i] = gameOptions.unitsPerPlayer;
 
     return {
       countries: countries,
@@ -112,7 +117,6 @@ const RiskGame = Game({
 
           const unassignedUnits = {...G.unassignedUnits};
           unassignedUnits[currentPlayer] += Math.max(Math.floor(numOwnedCountries / 3), 3);
-
           return {...G, unassignedUnits}
         }
       }
@@ -120,6 +124,7 @@ const RiskGame = Game({
   },
 });
 
-const App = Client({ game: RiskGame, board: RiskGameBoard, numPlayers: numPlayers });
+const App = Client({ game: RiskGame, board: RiskGameBoard, gameOptions: gameOptions });
 
 export default App;
+export const AI_SERVER_REQUEST_URL = "localhost:5000/next-move";
