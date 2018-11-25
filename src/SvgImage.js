@@ -4,7 +4,7 @@ import { playerTerritoryColor } from './RiskGameBoard';
 export class SvgImage extends React.Component {
   constructor(props) {
     super(props);
-    var parsedDoc = new DOMParser().parseFromString(props.image, 'text/html');
+    var parsedDoc = new DOMParser().parseFromString(props.map.image, 'text/html');
     this.state = {paths: parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path')};
   }
 
@@ -26,7 +26,8 @@ export class SvgImage extends React.Component {
       const countryName = path.id.split("_")[0] === 'Territory' ? this.props.names[idNum] : null;
 
       return (
-        <ReactPath state={countryState} key={path.id} d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
+        <ReactPath state={countryState} selectedCountry={this.props.selectedCountry} key={path.id}
+         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
       );
     });
 
@@ -66,6 +67,12 @@ class ReactPath extends React.Component {
         this.props.style.strokeWidth = 3
       else
         this.props.style.strokeWidth = 1;
+
+      if (this.props.selectedCountry === this.props.id) {
+        // we are the selected attacking territory: apply a differenet styling
+        this.props.style.strokeWidth = 3;
+        this.props.style.stroke = "rgb(0,255,0)";
+      } else if (this.)
       
       className = "territory";
     }
@@ -85,4 +92,3 @@ class ReactPath extends React.Component {
   }
 
 }
-

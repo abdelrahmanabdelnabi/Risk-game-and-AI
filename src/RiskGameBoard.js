@@ -4,6 +4,11 @@ import { worldMap } from './maps/worldmap';
 
 export class RiskGameBoard extends React.Component {
 
+  constructor() {
+    super();
+    this.state = {selectedCountry: null};
+  }
+
   // This handler gets called whenever a territory is clicked
   handleClick(territoryId) {
     const id = territoryId.split("_")[1];
@@ -25,6 +30,16 @@ export class RiskGameBoard extends React.Component {
       } else {
         alert("can't reinforce a country you don't occupy");
       }
+    } else if (this.props.ctx.phase === 'War') {
+      if (this.state.selectedCountry) {
+        // perform attack
+        this.props.moves.attack(this.props.selectedCountry, id);
+        this.props.events.endTurn();
+        this.setState({...this.state, selectedCountry: null});
+      } else {
+        // check if valid selection first
+        this.setState({...this.state, selectedCountry: id})
+      }
     }
   }
 
@@ -41,7 +56,7 @@ export class RiskGameBoard extends React.Component {
   render() {
     return (
       <div style={{margin: "20px 20px 20px 20px"}}>
-        <SvgImage countries={this.props.G.countries} image={worldMap.image} names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
+        <SvgImage countries={this.props.G.countries} selectedCountry={this.state.selectedCountry} map={worldMap} names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
       </div>
     );
   }
@@ -55,3 +70,5 @@ export function playerTerritoryColor(playerNum) {
     default: return "rgb(200,200,200)";
   }
 };
+
+export const AttackingStateEnum = Object.freeze({"normal":1, "attacking":2, "being_attacked":3});

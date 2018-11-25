@@ -133,7 +133,7 @@ countryName: {
   43: "Alaska",
 },
 
-"adjacencyMatrix": {
+"adjacencyList": {
   1: [43,3,5],
   3: [14,6,5,1],
   4: [43,1,5,7],
