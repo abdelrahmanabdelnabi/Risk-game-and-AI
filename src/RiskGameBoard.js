@@ -1,6 +1,7 @@
 import React from 'react';
 import { SvgImage } from './SvgImage';
 import { worldMap } from './maps/worldmap';
+import './RiskGameBoard.css';
 
 export class RiskGameBoard extends React.Component {
 
@@ -80,11 +81,25 @@ export class RiskGameBoard extends React.Component {
 
   render() {
     return (
-      <div style={{margin: "20px 20px 20px 20px"}}>
-        <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
-        defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={worldMap}
-        names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
-      </div>
+      <ul className="flex-container center">
+        <li>
+          <div style={{margin: "20px 20px 20px 20px"}}>
+            <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
+            defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={worldMap}
+            names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
+          </div>
+        </li>
+        <li>
+          <div style={{margin: "20px 20px 20px 20px"}}>
+            <h3>Current Player: {this.props.ctx.currentPlayer}</h3>
+            <h3>Unassigned Units: {this.props.G.unassignedUnits[this.props.ctx.currentPlayer]}</h3>
+            <h3>Current Phase: {this.props.ctx.phase}</h3>
+            {this.props.ctx.phase === 'War' &&
+              <h3>Selected Country: {worldMap.countryName[this.state.selectedCountry]}</h3>
+            }
+          </div>
+        </li>
+      </ul>
     );
   }
 };
