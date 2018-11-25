@@ -1,5 +1,5 @@
 import React from 'react';
-import { playerTerritoryColor } from './RiskGameBoard';
+import { playerTerritoryColor, AttackingStateEnum } from './RiskGameBoard';
 
 export class SvgImage extends React.Component {
   constructor(props) {
@@ -25,8 +25,15 @@ export class SvgImage extends React.Component {
       const countryState = path.id.split("_")[0] === 'Territory' ? this.props.countries[idNum] : null;
       const countryName = path.id.split("_")[0] === 'Territory' ? this.props.names[idNum] : null;
 
+      var attackState = AttackingStateEnum.normal;
+
+      if(this.props.attackingCountry === idNum)
+        attackState = AttackingStateEnum.attacking;
+      else if(this.props.defendingCountries.indexOf(+idNum) > -1)
+        attackState = AttackingStateEnum.being_attacked;
+
       return (
-        <ReactPath state={countryState} selectedCountry={this.props.selectedCountry} key={path.id}
+        <ReactPath state={countryState} attackState={attackState} key={path.id}
          d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
       );
     });
@@ -68,11 +75,14 @@ class ReactPath extends React.Component {
       else
         this.props.style.strokeWidth = 1;
 
-      if (this.props.selectedCountry === this.props.id) {
+      if (this.props.attackState === AttackingStateEnum.attacking) {
         // we are the selected attacking territory: apply a differenet styling
         this.props.style.strokeWidth = 3;
         this.props.style.stroke = "rgb(0,255,0)";
-      } else if (this.)
+      } else if (this.props.attackState === AttackingStateEnum.being_attacked) {
+        this.props.style.strokeWidth = 3;
+        this.props.style.stroke = "rgb(255,0,0)";
+      }
       
       className = "territory";
     }

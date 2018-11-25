@@ -4,8 +4,8 @@ import { worldMap } from './maps/worldmap';
 
 export class RiskGameBoard extends React.Component {
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {selectedCountry: null};
   }
 
@@ -33,7 +33,7 @@ export class RiskGameBoard extends React.Component {
     } else if (this.props.ctx.phase === 'War') {
       if (this.state.selectedCountry) {
         // perform attack
-        this.props.moves.attack(this.props.selectedCountry, id);
+        // this.props.moves.attack(this.props.selectedCountry, id);
         this.props.events.endTurn();
         this.setState({...this.state, selectedCountry: null});
       } else {
@@ -41,6 +41,16 @@ export class RiskGameBoard extends React.Component {
         this.setState({...this.state, selectedCountry: id})
       }
     }
+  }
+
+  // returns neighbouring enemy countries
+  _getDefendingCountries(attackingCountry) {
+    if(!attackingCountry)
+      return [];
+
+    const currPlayer = this.props.ctx.currentPlayer;
+    const neighbors = worldMap.adjacencyList[attackingCountry];
+    return neighbors.filter(neighbor => this.props.G.countries[neighbor].owner !== currPlayer);
   }
 
   // returns true if current player can reinforce the country with the specified id
@@ -56,7 +66,9 @@ export class RiskGameBoard extends React.Component {
   render() {
     return (
       <div style={{margin: "20px 20px 20px 20px"}}>
-        <SvgImage countries={this.props.G.countries} selectedCountry={this.state.selectedCountry} map={worldMap} names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
+        <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
+        defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={worldMap}
+        names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
       </div>
     );
   }
