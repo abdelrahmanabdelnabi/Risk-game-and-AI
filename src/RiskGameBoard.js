@@ -11,22 +11,18 @@ export class RiskGameBoard extends React.Component {
     this.state = {selectedCountry: null};
   }
 
-  componentDidUpdate(){
-    if (this.props.ctx.currentPlayer === "1")
-      this.requestAIMove();
-  }
-
   requestAIMove() {
     // check if the current player is an AI
     // if true, send a request to the AI server and simulate
     // the move returned by the AI server when the response is received
 
     // assumes player 1 is a greedy AI agent (for testing only)
-    if (this.props.ctx.currentPlayer === "1") {
+    if (this.props.ctx.currentPlayer === "0") {
       console.log("true");
       // const integerCountries = {}
       // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
       const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": worldMap.adjacencyList};
+      data.ctx.currentPlayer = "1";
       axios({
         url: `${AI_SERVER_REQUEST_URL}`,
         method: "post",
@@ -89,14 +85,14 @@ export class RiskGameBoard extends React.Component {
     if (this.props.ctx.phase === 'Occupation') {
       if (this._canOccupy(id)) {
         this.props.moves.occupyCountry(id);
-        this.props.events.endTurn();
+        this.endCurrentPlayerTurn();
       } else {
         alert("can't occupy an already occuppied country");
       }
     } else if (this.props.ctx.phase === 'Reinforce Countries') {
       if (this._canReinforce(id)) {
         this.props.moves.reinforceCountry(id, 1);
-        this.props.events.endTurn();
+        this.endCurrentPlayerTurn();
       } else {
         alert("can't reinforce a country you don't occupy");
       }
@@ -104,8 +100,8 @@ export class RiskGameBoard extends React.Component {
       if (this.state.selectedCountry) {
         if(this._canAttack(this.state.selectedCountry, id)) {
           // perform attack
-          this.props.moves.attack(this.props.selectedCountry, id);
-          this.props.events.endTurn();
+          this.props.moves.attack(this.state.selectedCountry, id);
+          this.endCurrentPlayerTurn();
           this.setState({...this.state, selectedCountry: null});
         } else {
           alert("you can't attack " + worldMap.countryName[id])
@@ -118,6 +114,14 @@ export class RiskGameBoard extends React.Component {
           alert("you can't attack with " + worldMap.countryName[id] + ". You don't own this country.");
         }
       }
+    }
+
+  }
+
+  endCurrentPlayerTurn() {
+    this.props.events.endTurn();
+    if(this.props.ctx.currentPlayer === "0") {
+      this.requestAIMove();
     }
   }
 
