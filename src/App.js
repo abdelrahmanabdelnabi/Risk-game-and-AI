@@ -12,7 +12,7 @@ function IsVictory(countries) {
 const gameOptions = {
   gameMap: worldMap,
   players: ["human", "greedy"],
-  unitsPerPlayer: 22,
+  unitsPerPlayer: 25,
   useDice: false
 };
 
@@ -25,7 +25,7 @@ const RiskGame = Game({
     Object.keys(gameOptions.gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
     const unassignedUnits = {};
 
-    for(var i = 0; i < apnumPlayers; i++)
+    for(var i = 0; i < numPlayers; i++)
       unassignedUnits[i] = gameOptions.unitsPerPlayer;
 
     return {

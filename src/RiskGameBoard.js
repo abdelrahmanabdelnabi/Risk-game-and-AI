@@ -60,17 +60,20 @@ export class RiskGameBoard extends React.Component {
       return;
 
     for(var i = 0; i < moves.length; i++) {
-      const move = moves[i];
+      let move = moves[i];
 
       if (move.name === "attack") {
-        const sourceId = move.sourceId;
-        const destId = move.destId;
+        let sourceId = move.sourceId;
+        let destId = move.destId;
 
         this.props.moves.attack(sourceId, destId);
       } else if (move.name === "reinforce") {
-        const sourceId = move.sourceId;
-        const numSoldiers = move.numSoldiers[this.props.ctx.currentPlayer];
+        let sourceId = move.sourceId;
+        let numSoldiers = move.numSoldiers[this.props.ctx.currentPlayer];
         this.props.moves.reinforceCountry(sourceId, numSoldiers);
+      } else if (move.name === "occupy") {
+        let sourceId = move.sourceId;
+        this.props.moves.occupyCountry(sourceId);
       } else if (move.name === "fortify") {
         // not yet implemented
       }
