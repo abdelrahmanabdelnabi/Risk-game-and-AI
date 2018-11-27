@@ -6,6 +6,8 @@ from math import ceil
 def seperate_countries(current_player, countries_state):
     match_owner_countries_id = defaultdict(list)
     dict_id_troop = {}
+    match_owner_countries_id["0"] = []
+    match_owner_countries_id["1"] = []
     for country_id in countries_state:
         match_owner_countries_id[countries_state[country_id]['owner']].append(country_id)
         dict_id_troop[country_id] = countries_state[country_id]['soldiers']
@@ -22,7 +24,7 @@ def get_oppent_neighbours(match, adj_list):
                     opponent_adj_list[target_country_id].append(neighbour_id)
     for target_country_id in opponent_adj_list:
         opponent_adj_list[target_country_id]=list(set(opponent_adj_list[target_country_id]))
-    return dict(opponent_adj_list)                         
+    return dict(opponent_adj_list)
 
 def handle_game_state (state):
     data = state
@@ -31,16 +33,17 @@ def handle_game_state (state):
     adj_list=data['adjacencyList']
     agent=data['agent']
     unassigned_units = data['G']['unassignedUnits'][current_player]
-    
+    ctx = data['ctx']
+
     match_countries,dict_id_troop = seperate_countries (current_player, countries_state)
     opponent_adj_list = get_oppent_neighbours(match_countries,adj_list)
-    return current_player,match_countries , dict_id_troop ,opponent_adj_list,agent, unassigned_units
+    return current_player,match_countries , dict_id_troop ,opponent_adj_list,agent, unassigned_units, ctx
 
 def select_agent(state):
     agent_tech = {'greedy': greedy_agent, 'passive': passive_agent, 'pacifist': pacifist_agent, 
                   'aggressive': aggressive_agent}
-    current_player,match_owner_countries,dict_id_troop,adj_list,agent, unassigned_units = handle_game_state (state)
-    args=(current_player,match_owner_countries,dict_id_troop,adj_list)
+    current_player,match_owner_countries,dict_id_troop,adj_list,agent, unassigned_units, ctx = handle_game_state (state)
+    args=(current_player,match_owner_countries,dict_id_troop,adj_list, ctx)
     target_list = agent_tech.get(agent)(args, unassigned_units)
     # print(ai_reinforce(args,unassigned_units))
     return target_list
@@ -48,7 +51,7 @@ def select_agent(state):
 def greedy_agent(args, unassigned_units):
     moves=ai_reinforce(args,unassigned_units)
     bsr,nbsr=heuristic(args)
-    current_player, match_owner_countries, dict_id_troop, adj_list = args
+    current_player, match_owner_countries, dict_id_troop, adj_list, ctx = args
     for inst in threshold(bsr,nbsr, dict_id_troop, adj_list):
         moves.append(inst)
     return return_format(moves)
@@ -56,7 +59,8 @@ def greedy_agent(args, unassigned_units):
 def reinforce_min_country(match_owner_countries, current_player, dict_id_troop, unassigned_units):
     min_index = 0
     min_val = 999
-    for country in match_owner_countries[current_player]:
+    print("match owner countries: ", match_owner_countries)
+    for country in match_owner_countries[str(current_player)]:
         if min_val > dict_id_troop[country]:
             min_val = dict_id_troop[country]
             min_index = country
@@ -64,12 +68,21 @@ def reinforce_min_country(match_owner_countries, current_player, dict_id_troop, 
     return min_index
 
 def passive_agent(args, unassigned_units):
-    current_player, match_owner_countries, dict_id_troop, adj_list = args
-    reinforced_source = reinforce_min_country(match_owner_countries, current_player, dict_id_troop, unassigned_units)
-    return return_format([("reinforce", reinforced_source, 0, unassigned_units)])
+    current_player, match_owner_countries, dict_id_troop, adj_list, ctx = args
+    if ctx["phase"] == "Occupation":
+      # return any un-occupied country
+      country_to_occupy =  match_owner_countries[None][0]
+      return return_format([("occupy", country_to_occupy, 0, 1)])
+    elif ctx["phase"] == "Reinforce Countries":
+      reinforced_source = reinforce_min_country(match_owner_countries, current_player, dict_id_troop, unassigned_units)
+      return return_format([("reinforce", reinforced_source, 0, 1)])
+    elif ctx["phase"] == "War":
+      reinforced_source = reinforce_min_country(match_owner_countries, current_player, dict_id_troop, unassigned_units)
+      return return_format([("reinforce", reinforced_source, 0, unassigned_units)])
+    return return_format([("can't find any moves", 0, 0, unassigned_units)])
 
 def pacifist_agent(args, unassigned_units):
-    current_player, match_owner_countries, dict_id_troop, adj_list = args
+    current_player, match_owner_countries, dict_id_troop, adj_list, ctx = args
     reinforced_source = reinforce_min_country(match_owner_countries, current_player, dict_id_troop, unassigned_units)
     destination = 0
     min_val = 999
@@ -117,7 +130,7 @@ def best_one_can_attack(key, dict_id_troop, adj_list):
 
 
 def aggressive_agent(args, unassigned_units):
-    current_player, match_owner_countries, dict_id_troop, adj_list = args
+    current_player, match_owner_countries, dict_id_troop, adj_list, ctx = args
     reinforce_source = 0
     max_troops = -1
     for country in match_owner_countries[current_player]:

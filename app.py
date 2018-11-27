@@ -16,7 +16,6 @@ def solve():
     print(data["ctx"])
     print(data["agent"])
     print(data["adjacencyList"])
-    print("\ncountries of 40: ", data["G"]["countries"]['40'])
     solution = select_agent(data)
     print(solution)
     # print(jsonify(solution))
