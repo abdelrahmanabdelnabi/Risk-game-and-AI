@@ -12,6 +12,7 @@ function IsVictory(countries) {
 const gameMap = worldMap;
 const numPlayers = 3;
 const unitsPerPlayer = 20
+const useDice = false;
 
 const RiskGame = Game({
   setup: () => {
@@ -58,6 +59,24 @@ const RiskGame = Game({
 
     attack(G, ctx, sourceId, destId) {
       // TODO
+      // assuming the board component validates the attack move
+
+      const countries = {...G.countries};
+
+      if(useDice) {
+
+      } else {
+        // make sure the attacking country has more soldiers than the defending country by at least 2.
+        const diff = G.countries[sourceId].soldiers - G.countries[destId];
+        if ( diff >= 2) {
+          // subtract the number of soldiers of the defending country from the attacking country,
+          // and move all but one of the soldiers of the attacking country to the defeated country.
+          countries[sourceId].soldiers = 1;
+          countries[destId].soldiers = diff - 1;
+          countries[destId].owner = countries[sourceId].owner;
+          return {...G, countries};
+        }
+      }
     }
   },
 
