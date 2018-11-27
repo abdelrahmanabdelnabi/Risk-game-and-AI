@@ -12,7 +12,7 @@ function IsVictory(countries) {
 const gameOptions = {
   gameMap: worldMap,
   players: ["human", "greedy"],
-  unitsPerPlayer: 20,
+  unitsPerPlayer: 22,
   useDice: false
 };
 
@@ -48,14 +48,14 @@ const RiskGame = Game({
       return { ...G, countries, unassignedUnits };
     },
 
-    reinforceCountry(G, ctx, id) {
+    reinforceCountry(G, ctx, id, numSoldiers) {
       const countries = {...G.countries};
       const unassignedUnits = {...G.unassignedUnits};
 
       // Ensure we can't overwrite countries.
-      if (countries[id].owner === ctx.currentPlayer && unassignedUnits[ctx.currentPlayer] > 0) {
-        countries[id].soldiers += 1;
-        unassignedUnits[ctx.currentPlayer]--;
+      if (countries[id].owner === ctx.currentPlayer && +unassignedUnits[ctx.currentPlayer] >= +numSoldiers) {
+        countries[id].soldiers += +numSoldiers;
+        unassignedUnits[ctx.currentPlayer] -= +numSoldiers;
       }
 
       return { ...G, countries, unassignedUnits };
@@ -127,4 +127,4 @@ const RiskGame = Game({
 const App = Client({ game: RiskGame, board: RiskGameBoard, gameOptions: gameOptions });
 
 export default App;
-export const AI_SERVER_REQUEST_URL = "localhost:5000/next-move";
+export const AI_SERVER_REQUEST_URL = "http://localhost:5000/solve";

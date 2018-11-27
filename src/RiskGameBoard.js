@@ -11,21 +11,35 @@ export class RiskGameBoard extends React.Component {
     this.state = {selectedCountry: null};
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(){
+    if (this.props.ctx.currentPlayer === "1")
+      this.requestAIMove();
+  }
+
+  requestAIMove() {
     // check if the current player is an AI
     // if true, send a request to the AI server and simulate
     // the move returned by the AI server when the response is received
 
     // assumes player 1 is a greedy AI agent (for testing only)
-    if (this.props.ctx.currentPlayer === 1 && !this.state.aiMoves) {
-      const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "greedy"};
-      axios.create( {
+    if (this.props.ctx.currentPlayer === "1") {
+      console.log("true");
+      // const integerCountries = {}
+      // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
+      const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": worldMap.adjacencyList};
+      axios({
         url: `${AI_SERVER_REQUEST_URL}`,
-        method: "get",
-        data: data,
+        method: "post",
+        mode: 'no-cors',
+        data: JSON.stringify(data),
+        credentials: 'same-origin',
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        }
       })
       .then(response => {
-          this.handleAIMovesReceived(response);
+          this.handleAIMovesResponse(response);
       })
       .catch(error => alert(error))
     }
@@ -36,14 +50,16 @@ export class RiskGameBoard extends React.Component {
       alert("Error in AI server, response code: " + response.status + ". Response text: " + response.statusText);
       console.log(response.data);
     }
-
-    const moves = response.data.moves;
-    this.setState({...this.state, aiMoves: moves});
-    this.simulateAIMoves();
+    const json = JSON.parse(response.data);
+    var moves = json['moves'];
+    console.log(moves);
+    this.simulateAIMoves(moves);
   }
 
-  simulateAIMoves() {
-    const moves = this.state.aiMoves;
+  simulateAIMoves(moves) {
+    if(!moves)
+      return;
+
     for(var i = 0; i < moves.length; i++) {
       const move = moves[i];
 
@@ -54,12 +70,12 @@ export class RiskGameBoard extends React.Component {
         this.props.moves.attack(sourceId, destId);
       } else if (move.name === "reinforce") {
         const sourceId = move.sourceId;
-        this.props.moves.reinforceCountry(sourceId);
+        const numSoldiers = move.numSoldiers[this.props.ctx.currentPlayer];
+        this.props.moves.reinforceCountry(sourceId, numSoldiers);
       } else if (move.name === "fortify") {
         // not yet implemented
       }
     }
-    this.setState({...this.state, aiMoves: null})
     this.props.events.endTurn();
   }
 
@@ -79,7 +95,7 @@ export class RiskGameBoard extends React.Component {
       }
     } else if (this.props.ctx.phase === 'Reinforce Countries') {
       if (this._canReinforce(id)) {
-        this.props.moves.reinforceCountry(id);
+        this.props.moves.reinforceCountry(id, 1);
         this.props.events.endTurn();
       } else {
         alert("can't reinforce a country you don't occupy");
