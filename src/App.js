@@ -25,7 +25,7 @@ const RiskGame = Game({
     Object.keys(gameOptions.gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
     const unassignedUnits = {};
 
-    for(var i = 0; i < numPlayers; i++)
+    for(var i = 0; i < apnumPlayers; i++)
       unassignedUnits[i] = gameOptions.unitsPerPlayer;
 
     return {
@@ -63,6 +63,24 @@ const RiskGame = Game({
 
     attack(G, ctx, sourceId, destId) {
       // TODO
+      // assuming the board component validates the attack move
+
+      const countries = {...G.countries};
+
+      if(gameOptions.useDice) {
+
+      } else {
+        // make sure the attacking country has more soldiers than the defending country by at least 2.
+        const diff = G.countries[sourceId].soldiers - G.countries[destId];
+        if ( diff >= 2) {
+          // subtract the number of soldiers of the defending country from the attacking country,
+          // and move all but one of the soldiers of the attacking country to the defeated country.
+          countries[sourceId].soldiers = 1;
+          countries[destId].soldiers = diff - 1;
+          countries[destId].owner = countries[sourceId].owner;
+          return {...G, countries};
+        }
+      }
     }
   },
 
