@@ -25,7 +25,7 @@ def get_oppent_neighbours(match, adj_list):
     return dict(opponent_adj_list)                         
 
 def handle_game_state (state):
-    data=ast.literal_eval(state)
+    data = state
     current_player = data['ctx']['currentPlayer']
     countries_state = data['G']['countries']
     adj_list=data['adjacencyList']
@@ -144,15 +144,15 @@ def heuristic(args):
             continue
         for opponent in opponents:
             if opponent not in opponent_BSR:
-                opponent_BSR[opponent] = BSR(opponent,adj_list[opponent],dict_id_toop)
+                opponent_BSR[opponent] = BSR(opponent,adj_list[str(opponent)],dict_id_toop)
     opponent_NBSR=NBSR(opponent_BSR)
     return opponent_BSR,opponent_NBSR          
 
 def BSR(country_id,opponent,dict_id_troop):
     sum = 0
     for opponent_id in opponent:
-        sum += dict_id_troop[opponent_id]
-    return sum/dict_id_troop[country_id]
+        sum += dict_id_troop[str(opponent_id)]
+    return sum/dict_id_troop[str(country_id)]
 
 def NBSR(dict_BSR):
     sum =0

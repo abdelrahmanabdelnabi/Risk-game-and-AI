@@ -1,6 +1,8 @@
 import React from 'react';
 import { SvgImage } from './SvgImage';
 import { worldMap } from './maps/worldmap';
+import axios from 'axios';
+import {AI_SERVER_REQUEST_URL} from './App';
 import './RiskGameBoard.css';
 import './dice.css'
 import './soldiersNumbers.css';
@@ -10,6 +12,70 @@ export class RiskGameBoard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {selectedCountry: null};
+  }
+
+  requestAIMove() {
+    // check if the current player is an AI
+    // if true, send a request to the AI server and simulate
+    // the move returned by the AI server when the response is received
+
+    // assumes player 1 is a greedy AI agent (for testing only)
+    if (this.props.ctx.currentPlayer === "0") {
+      console.log("true");
+      // const integerCountries = {}
+      // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
+      const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": worldMap.adjacencyList};
+      data.ctx.currentPlayer = "1";
+      axios({
+        url: `${AI_SERVER_REQUEST_URL}`,
+        method: "post",
+        mode: 'no-cors',
+        data: JSON.stringify(data),
+        credentials: 'same-origin',
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => {
+          this.handleAIMovesResponse(response);
+      })
+      .catch(error => alert(error))
+    }
+  }
+
+  handleAIMovesResponse(response) {
+    if (response.status !== 200) {
+      alert("Error in AI server, response code: " + response.status + ". Response text: " + response.statusText);
+      console.log(response.data);
+    }
+    const json = JSON.parse(response.data);
+    var moves = json['moves'];
+    console.log(moves);
+    this.simulateAIMoves(moves);
+  }
+
+  simulateAIMoves(moves) {
+    if(!moves)
+      return;
+
+    for(var i = 0; i < moves.length; i++) {
+      const move = moves[i];
+
+      if (move.name === "attack") {
+        const sourceId = move.sourceId;
+        const destId = move.destId;
+
+        this.props.moves.attack(sourceId, destId);
+      } else if (move.name === "reinforce") {
+        const sourceId = move.sourceId;
+        const numSoldiers = move.numSoldiers[this.props.ctx.currentPlayer];
+        this.props.moves.reinforceCountry(sourceId, numSoldiers);
+      } else if (move.name === "fortify") {
+        // not yet implemented
+      }
+    }
+    this.props.events.endTurn();
   }
 
   // This handler gets called whenever a territory is clicked
@@ -22,14 +88,14 @@ export class RiskGameBoard extends React.Component {
     if (this.props.ctx.phase === 'Occupation') {
       if (this._canOccupy(id)) {
         this.props.moves.occupyCountry(id);
-        this.props.events.endTurn();
+        this.endCurrentPlayerTurn();
       } else {
         alert("can't occupy an already occuppied country");
       }
     } else if (this.props.ctx.phase === 'Reinforce Countries') {
       if (this._canReinforce(id)) {
-        this.props.moves.reinforceCountry(id);
-        this.props.events.endTurn();
+        this.props.moves.reinforceCountry(id, 1);
+        this.endCurrentPlayerTurn();
       } else {
         alert("can't reinforce a country you don't occupy");
       }
@@ -37,13 +103,14 @@ export class RiskGameBoard extends React.Component {
       if (this.state.selectedCountry) {
         if(this._canAttack(this.state.selectedCountry, id)) {
           // perform attack
+          this.props.moves.attack(this.state.selectedCountry, id);
+          this.endCurrentPlayerTurn();
           this.props.moves.attack(this.props.selectedCountry, id);
           this.props.events.endTurn();
           this.setState({...this.state, selectedCountry: null});
         } else {
           alert("you can't attack " + worldMap.countryName[id])
         }
-
       } else {
         // check if valid selection first
         if (this.props.G.countries[id].owner === this.props.ctx.currentPlayer)
@@ -52,6 +119,14 @@ export class RiskGameBoard extends React.Component {
           alert("you can't attack with " + worldMap.countryName[id] + ". You don't own this country.");
         }
       }
+    }
+
+  }
+
+  endCurrentPlayerTurn() {
+    this.props.events.endTurn();
+    if(this.props.ctx.currentPlayer === "0") {
+      this.requestAIMove();
     }
   }
 
