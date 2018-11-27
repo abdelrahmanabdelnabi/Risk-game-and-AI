@@ -69,7 +69,7 @@ export class RiskGameBoard extends React.Component {
         this.props.moves.attack(sourceId, destId);
       } else if (move.name === "reinforce") {
         let sourceId = move.sourceId;
-        let numSoldiers = move.numSoldiers[this.props.ctx.currentPlayer];
+        let numSoldiers = move.numSoldiers;
         this.props.moves.reinforceCountry(sourceId, numSoldiers);
       } else if (move.name === "occupy") {
         let sourceId = move.sourceId;
