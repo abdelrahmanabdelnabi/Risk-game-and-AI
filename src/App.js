@@ -97,7 +97,7 @@ const RiskGame = Game({
       },
 
       {
-        name: "war",
+        name: "War",
         allowedMoves: ['attack'],
 
         // give the current player his new units on the beginning of each turn
