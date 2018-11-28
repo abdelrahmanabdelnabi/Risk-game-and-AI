@@ -111,10 +111,11 @@ export class RiskGameBoard extends React.Component {
         }
 
       } else if (this.state.selectedCountry) {
-        if(this._canAttack(this.state.selectedCountry, id)) {
+        if (this.state.selectedCountry === id)
+          this.setState({...this.state, selectedCountry: null});
+        else if(this._canAttack(this.state.selectedCountry, id)) {
           // perform attack
           this.props.moves.attack(this.state.selectedCountry, id);
-          this.endCurrentPlayerTurn();
           this.setState({...this.state, selectedCountry: null});
         } else {
           alert("you can't attack " + worldMap.countryName[id])
@@ -128,6 +129,11 @@ export class RiskGameBoard extends React.Component {
         }
       }
     }
+  }
+
+  endTurnHandler() {
+    this.setState({...this.state, selectedCountry: null});
+    this.endCurrentPlayerTurn();
   }
 
   endCurrentPlayerTurn() {
@@ -310,11 +316,22 @@ export class RiskGameBoard extends React.Component {
         <li>
           <div style={{margin: "20px 20px 20px 20px"}}>
             <h3>Current Player: {this.props.ctx.currentPlayer}</h3>
+            {
+              this.props.G.unassignedUnits[this.props.ctx.currentPlayer] > 0 &&
+              <h3>Assign your units!</h3>
+            }
             <h3>Unassigned Units: {this.props.G.unassignedUnits[this.props.ctx.currentPlayer]}</h3>
             <h3>Current Phase: {this.props.ctx.phase}</h3>
-            {this.props.ctx.phase === 'War' &&
+            {
+              this.props.ctx.phase === 'War' &&
               <h3>Selected Country: {worldMap.countryName[this.state.selectedCountry]}</h3>
             }
+
+            {
+              this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
+              <p>Attack your enemies or <button onClick={() => this.endTurnHandler()}>End Turn</button></p>
+            }
+
             <span className="dice dice-3" title="Dice 1"></span>
             <span className="dice dice-6" title="Dice 2"></span>
             <span className="dice dice-4" title="Dice 3"></span>
