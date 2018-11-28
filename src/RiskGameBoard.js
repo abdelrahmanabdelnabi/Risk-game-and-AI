@@ -101,7 +101,16 @@ export class RiskGameBoard extends React.Component {
         alert("can't reinforce a country you don't occupy");
       }
     } else if (this.props.ctx.phase === 'War') {
-      if (this.state.selectedCountry) {
+
+      // if the player has unassigned units, make his assign them first
+      if (this.props.G.unassignedUnits[this.props.ctx.currentPlayer] > 0) {
+        if(this._canReinforce(id)) {
+          this.props.moves.reinforceCountry(id, 1);
+        } else {
+          alert("you can't reinforce " + worldMap.countryName[id] + ". You don't own this country.");
+        }
+
+      } else if (this.state.selectedCountry) {
         if(this._canAttack(this.state.selectedCountry, id)) {
           // perform attack
           this.props.moves.attack(this.state.selectedCountry, id);
@@ -119,7 +128,6 @@ export class RiskGameBoard extends React.Component {
         }
       }
     }
-
   }
 
   endCurrentPlayerTurn() {
