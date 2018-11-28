@@ -121,7 +121,7 @@ const RiskGame = Game({
 
       {
         name: "War",
-        allowedMoves: ['attack'],
+        allowedMoves: ['attack', 'reinforceCountry'],
 
         // give the current player his new units on the beginning of each turn
         onTurnBegin: (G, ctx) => {
@@ -130,8 +130,6 @@ const RiskGame = Game({
           var numOwnedCountries =
           Object.keys(G.countries)
           .reduce((count, key) => count + (G.countries[key].owner === currentPlayer ? 1 : 0), 0);
-
-          console.log(numOwnedCountries);
 
           const unassignedUnits = {...G.unassignedUnits};
           unassignedUnits[currentPlayer] += Math.max(Math.floor(numOwnedCountries / 3), 3);
