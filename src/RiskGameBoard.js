@@ -65,7 +65,6 @@ export class RiskGameBoard extends React.Component {
       if (move.name === "attack") {
         let sourceId = move.sourceId;
         let destId = move.destId;
-
         this.props.moves.attack(sourceId, destId);
       } else if (move.name === "reinforce") {
         let sourceId = move.sourceId;
@@ -108,7 +107,7 @@ export class RiskGameBoard extends React.Component {
           // perform attack
           this.props.moves.attack(this.state.selectedCountry, id);
           this.endCurrentPlayerTurn();
-          this.props.moves.attack(this.props.selectedCountry, id);
+          this.props.moves.attack(this.state.selectedCountry, id);
           this.props.events.endTurn();
           this.setState({...this.state, selectedCountry: null});
         } else {

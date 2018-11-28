@@ -71,7 +71,7 @@ const RiskGame = Game({
 
       } else {
         // make sure the attacking country has more soldiers than the defending country by at least 2.
-        const diff = G.countries[sourceId].soldiers - G.countries[destId];
+        const diff = G.countries[sourceId].soldiers - G.countries[destId].soldiers;
         if ( diff >= 2) {
           // subtract the number of soldiers of the defending country from the attacking country,
           // and move all but one of the soldiers of the attacking country to the defeated country.
