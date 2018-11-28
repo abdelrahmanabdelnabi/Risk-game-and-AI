@@ -21,7 +21,6 @@ export class RiskGameBoard extends React.Component {
 
     // assumes player 1 is a greedy AI agent (for testing only)
     if (this.props.ctx.currentPlayer === "0") {
-      console.log("true");
       // const integerCountries = {}
       // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
       const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": worldMap.adjacencyList};
@@ -107,8 +106,6 @@ export class RiskGameBoard extends React.Component {
           // perform attack
           this.props.moves.attack(this.state.selectedCountry, id);
           this.endCurrentPlayerTurn();
-          this.props.moves.attack(this.state.selectedCountry, id);
-          this.props.events.endTurn();
           this.setState({...this.state, selectedCountry: null});
         } else {
           alert("you can't attack " + worldMap.countryName[id])
