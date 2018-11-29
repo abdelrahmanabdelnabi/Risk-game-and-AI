@@ -11,9 +11,10 @@ function IsVictory(countries) {
 
 const gameOptions = {
   gameMap: worldMap,
-  players: ["human", "greedy"],
+  players: [{name: "human", isAI: false}, {name: "passive", isAI: true}],
   unitsPerPlayer: 25,
-  useDice: false
+  useDice: false,
+  // startWithRandomCountries: false
 };
 
 const numPlayers = gameOptions.players.length;
