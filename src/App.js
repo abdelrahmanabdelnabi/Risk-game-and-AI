@@ -1,6 +1,6 @@
 import { Game } from 'boardgame.io/core';
 import { Client } from 'boardgame.io/react';
-import { RiskGameBoard } from './RiskGameBoard';
+import { BoardWithOptions } from './RiskGameBoard';
 import { worldMap } from './maps/worldmap';
 
 // Return true if `countries` is in a winning configuration.
@@ -140,7 +140,7 @@ const RiskGame = Game({
   },
 });
 
-const App = Client({ game: RiskGame, board: RiskGameBoard, gameOptions: gameOptions });
+const App = Client({ game: RiskGame, board: BoardWithOptions(gameOptions), gameOptions: gameOptions });
 
 export default App;
 export const AI_SERVER_REQUEST_URL = "http://localhost:5000/solve";
