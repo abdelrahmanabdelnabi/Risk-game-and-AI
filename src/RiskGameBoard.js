@@ -15,17 +15,22 @@ export function BoardWithOptions(gameOptions) {
       this.state = {selectedCountry: null};
     }
 
+    componentDidMount() {
+      this.turnStartHandler();
+    }
+
     componentDidUpdate(prevProps) {
       if(this.props.ctx.currentPlayer === prevProps.ctx.currentPlayer)
         return;
       else {
-        this.turnChanged();
+        this.turnStartHandler();
       }
     }
 
-    turnChanged() {
+    turnStartHandler() {
       // check if current player is AI, if so send request to AI server
-      if(this.props.ctx.currentPlayer === "1") {
+      const currentPlayer = gameOptions.players[+this.props.ctx.currentPlayer];
+      if(currentPlayer.isAI) {
         this.requestAIMove();
       }
     }
@@ -35,11 +40,9 @@ export function BoardWithOptions(gameOptions) {
       // if true, send a request to the AI server and simulate
       // the move returned by the AI server when the response is received
 
-      // assumes player 1 is a greedy AI agent (for testing only)
-      if (this.props.ctx.currentPlayer === "1") {
-        // const integerCountries = {}
-        // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
-        const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": gameOptions.gameMap.adjacencyList};
+      const currentPlayer = gameOptions.players[+this.props.ctx.currentPlayer];
+      if (currentPlayer.isAI) {
+        const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": currentPlayer.name, "adjacencyList": gameOptions.gameMap.adjacencyList};
         axios({
           url: `${AI_SERVER_REQUEST_URL}`,
           method: "post",
