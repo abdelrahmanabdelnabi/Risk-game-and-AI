@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_from_directory, request, jsonify
-from agent import select_agent
+from agent import Agent
 import json
 import time
 import math
@@ -16,7 +16,7 @@ def solve():
     print(data["ctx"])
     print(data["agent"])
     print(data["adjacencyList"])
-    solution = select_agent(data)
+    solution = Agent(data).target_list
     print(solution)
     # print(jsonify(solution))
     return jsonify(solution)
