@@ -1,6 +1,5 @@
 import React from 'react';
 import { SvgImage } from './SvgImage';
-import { worldMap } from './maps/worldmap';
 import axios from 'axios';
 import {AI_SERVER_REQUEST_URL} from './App';
 import './RiskGameBoard.css';
@@ -22,7 +21,6 @@ export function BoardWithOptions(gameOptions) {
       else {
         this.turnChanged();
       }
-
     }
 
     turnChanged() {
@@ -41,7 +39,7 @@ export function BoardWithOptions(gameOptions) {
       if (this.props.ctx.currentPlayer === "1") {
         // const integerCountries = {}
         // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
-        const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": worldMap.adjacencyList};
+        const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": gameOptions.gameMap.adjacencyList};
         axios({
           url: `${AI_SERVER_REQUEST_URL}`,
           method: "post",
@@ -124,7 +122,7 @@ export function BoardWithOptions(gameOptions) {
           if(this._canReinforce(id)) {
             this.props.moves.reinforceCountry(id, 1);
           } else {
-            alert("you can't reinforce " + worldMap.countryName[id] + ". You don't own this country.");
+            alert("you can't reinforce " + gameOptions.gameMap.countryName[id] + ". You don't own this country.");
           }
 
         } else if (this.state.selectedCountry) {
@@ -135,14 +133,14 @@ export function BoardWithOptions(gameOptions) {
             this.props.moves.attack(this.state.selectedCountry, id);
             this.setState({...this.state, selectedCountry: null});
           } else {
-            alert("you can't attack " + worldMap.countryName[id])
+            alert("you can't attack " + gameOptions.gameMap.countryName[id])
           }
         } else {
           // check if valid selection first
           if (this.props.G.countries[id].owner === this.props.ctx.currentPlayer)
             this.setState({...this.state, selectedCountry: id})
           else {
-            alert("you can't attack with " + worldMap.countryName[id] + ". You don't own this country.");
+            alert("you can't attack with " + gameOptions.gameMap.countryName[id] + ". You don't own this country.");
           }
         }
       }
@@ -158,7 +156,7 @@ export function BoardWithOptions(gameOptions) {
     }
 
     _canAttack(sourceId, destId) {
-      const isNeighbor = worldMap.adjacencyList[sourceId].indexOf(+destId) > -1;
+      const isNeighbor = gameOptions.gameMap.adjacencyList[sourceId].indexOf(+destId) > -1;
       const isEnemy = this.props.G.countries[sourceId].owner !== this.props.G.countries[destId].owner;
       return isNeighbor && isEnemy;
     }
@@ -169,7 +167,7 @@ export function BoardWithOptions(gameOptions) {
         return [];
 
       const currPlayer = this.props.ctx.currentPlayer;
-      const neighbors = worldMap.adjacencyList[attackingCountry];
+      const neighbors = gameOptions.gameMap.adjacencyList[attackingCountry];
       return neighbors.filter(neighbor => this.props.G.countries[neighbor].owner !== currPlayer);
     }
 
@@ -189,8 +187,8 @@ export function BoardWithOptions(gameOptions) {
           <li>
             <div style={{margin: "20px 20px 20px 20px"}}>
               <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
-              defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={worldMap}
-              names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
+              defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={gameOptions.gameMap}
+              names={gameOptions.gameMap.countryName} onClick={(i) => this.handleClick(i)}/>
               <div id="ArmiesLayer_27" className="ujsSprite">
                 <div className="ujsTerritoryText" style={{left: "300px", top: "95px", color: "rgb(0, 0, 0)"}}>
                   {this.props.G.countries['3']['soldiers']}
@@ -338,7 +336,7 @@ export function BoardWithOptions(gameOptions) {
               <h3>Current Phase: {this.props.ctx.phase}</h3>
               {
                 this.props.ctx.phase === 'War' &&
-                <h3>Selected Country: {worldMap.countryName[this.state.selectedCountry]}</h3>
+                <h3>Selected Country: {gameOptions.gameMap.countryName[this.state.selectedCountry]}</h3>
               }
 
               {
