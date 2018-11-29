@@ -9,19 +9,24 @@ function IsVictory(countries) {
   return false;
 }
 
-const gameMap = worldMap;
-const numPlayers = 3;
-const unitsPerPlayer = 20
+const gameOptions = {
+  gameMap: worldMap,
+  players: ["human", "greedy"],
+  unitsPerPlayer: 25,
+  useDice: false
+};
+
+const numPlayers = gameOptions.players.length;
 
 const RiskGame = Game({
   setup: () => {
 
     const countries = {};
-    Object.keys(gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
+    Object.keys(gameOptions.gameMap.countryName).map((key) => countries[key] = {owner: null, soldiers: 0});
     const unassignedUnits = {};
 
     for(var i = 0; i < numPlayers; i++)
-      unassignedUnits[i] = unitsPerPlayer;
+      unassignedUnits[i] = gameOptions.unitsPerPlayer;
 
     return {
       countries: countries,
@@ -43,14 +48,14 @@ const RiskGame = Game({
       return { ...G, countries, unassignedUnits };
     },
 
-    reinforceCountry(G, ctx, id) {
+    reinforceCountry(G, ctx, id, numSoldiers) {
       const countries = {...G.countries};
       const unassignedUnits = {...G.unassignedUnits};
 
       // Ensure we can't overwrite countries.
-      if (countries[id].owner === ctx.currentPlayer && unassignedUnits[ctx.currentPlayer] > 0) {
-        countries[id].soldiers += 1;
-        unassignedUnits[ctx.currentPlayer]--;
+      if (countries[id].owner === ctx.currentPlayer && +unassignedUnits[ctx.currentPlayer] >= +numSoldiers) {
+        countries[id].soldiers += +numSoldiers;
+        unassignedUnits[ctx.currentPlayer] -= +numSoldiers;
       }
 
       return { ...G, countries, unassignedUnits };
@@ -58,6 +63,24 @@ const RiskGame = Game({
 
     attack(G, ctx, sourceId, destId) {
       // TODO
+      // assuming the board component validates the attack move
+
+      const countries = {...G.countries};
+
+      if(gameOptions.useDice) {
+
+      } else {
+        // make sure the attacking country has more soldiers than the defending country by at least 2.
+        const diff = G.countries[sourceId].soldiers - G.countries[destId].soldiers;
+        if ( diff >= 2) {
+          // subtract the number of soldiers of the defending country from the attacking country,
+          // and move all but one of the soldiers of the attacking country to the defeated country.
+          countries[sourceId].soldiers = 1;
+          countries[destId].soldiers = diff - 1;
+          countries[destId].owner = countries[sourceId].owner;
+          return {...G, countries};
+        }
+      }
     }
   },
 
@@ -97,8 +120,8 @@ const RiskGame = Game({
       },
 
       {
-        name: "war",
-        allowedMoves: ['attack'],
+        name: "War",
+        allowedMoves: ['attack', 'reinforceCountry'],
 
         // give the current player his new units on the beginning of each turn
         onTurnBegin: (G, ctx) => {
@@ -108,11 +131,8 @@ const RiskGame = Game({
           Object.keys(G.countries)
           .reduce((count, key) => count + (G.countries[key].owner === currentPlayer ? 1 : 0), 0);
 
-          console.log(numOwnedCountries);
-
           const unassignedUnits = {...G.unassignedUnits};
           unassignedUnits[currentPlayer] += Math.max(Math.floor(numOwnedCountries / 3), 3);
-
           return {...G, unassignedUnits}
         }
       }
@@ -120,6 +140,7 @@ const RiskGame = Game({
   },
 });
 
-const App = Client({ game: RiskGame, board: RiskGameBoard, numPlayers: numPlayers });
+const App = Client({ game: RiskGame, board: RiskGameBoard, gameOptions: gameOptions });
 
 export default App;
+export const AI_SERVER_REQUEST_URL = "http://localhost:5000/solve";

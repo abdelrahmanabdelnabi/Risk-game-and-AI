@@ -23,11 +23,11 @@ class Informed(Enum):
 
 class State:
     def __init__(self, data):
-        data = ast.literal_eval(data)
-        self.current_player = data['ctx']['currentPlayer']
+        self.current_player = str(data['ctx']['currentPlayer'])
         self.cities = data['G']['countries']
         self.adj_list = data['adjacencyList']
         self.agent = data['agent']
+        self.phase = data['ctx']["phase"]
         self.unassigned_units = data['G']['unassignedUnits'][self.current_player]
         self.dict_player_cities, self.dict_city_troops = self.seperate_cities()
         self.opponent_adj_list = self.get_opponent_neighbours()
@@ -125,11 +125,18 @@ class Agent:
             response['moves'].append({'name': tup[0], 'sourceId': tup[1], 'destId': tup[2], 'numSoldiers': tup[3]})
         return json.dumps(response)
 
-
     def passive_agent(self):
-        weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
-        return self.return_format([("reinforce", weakest_city, 0, self.state.unassigned_units)])
-
+        if self.state.phase == "Occupation":
+            # return any un-occupied country
+            country_to_occupy =  self.state.dict_player_cities[None][0]
+            return self.return_format([("occupy", country_to_occupy, 0, 1)])
+        elif self.state.phase == "Reinforce Countries":
+            weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
+            return self.return_format([("reinforce", weakest_city, 0, 1)])
+        elif self.state.phase == "War":
+            weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
+            return self.return_format([("reinforce", weakest_city, 0, self.state.unassigned_units)])
+        return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def pacifist_agent(self):
         weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
