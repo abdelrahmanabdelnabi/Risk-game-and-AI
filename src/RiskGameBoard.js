@@ -14,17 +14,32 @@ export class RiskGameBoard extends React.Component {
     this.state = {selectedCountry: null};
   }
 
+  componentDidUpdate(prevProps) {
+    if(this.props.ctx.currentPlayer === prevProps.ctx.currentPlayer)
+      return;
+    else {
+      this.turnChanged();
+    }
+
+  }
+
+  turnChanged() {
+    // check if current player is AI, if so send request to AI server
+    if(this.props.ctx.currentPlayer === "1") {
+      this.requestAIMove();
+    }
+  }
+
   requestAIMove() {
     // check if the current player is an AI
     // if true, send a request to the AI server and simulate
     // the move returned by the AI server when the response is received
 
     // assumes player 1 is a greedy AI agent (for testing only)
-    if (this.props.ctx.currentPlayer === "0") {
+    if (this.props.ctx.currentPlayer === "1") {
       // const integerCountries = {}
       // Object.keys(this.props.G).map(key => integerCountries[+key] = this.props.G[key])
       const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": "passive", "adjacencyList": worldMap.adjacencyList};
-      data.ctx.currentPlayer = "1";
       axios({
         url: `${AI_SERVER_REQUEST_URL}`,
         method: "post",
@@ -138,9 +153,6 @@ export class RiskGameBoard extends React.Component {
 
   endCurrentPlayerTurn() {
     this.props.events.endTurn();
-    if(this.props.ctx.currentPlayer === "0") {
-      this.requestAIMove();
-    }
   }
 
   _canAttack(sourceId, destId) {
