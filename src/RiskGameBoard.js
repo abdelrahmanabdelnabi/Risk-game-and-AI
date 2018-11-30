@@ -188,7 +188,7 @@ export class RiskGameBoard extends React.Component {
           <div style={{margin: "20px 20px 20px 20px"}}>
             <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
             defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={worldMap}
-            names={worldMap.countryName} onClick={(i) => this.handleClick(i)}/>
+            onClick={(i) => this.handleClick(i)}/>
           </div>
           <div>
             <ul className="legend">
