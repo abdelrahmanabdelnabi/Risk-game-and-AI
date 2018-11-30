@@ -7,8 +7,20 @@ export class SvgImage extends React.Component {
     var parsedDoc = new DOMParser().parseFromString(props.map.image, 'text/html');
     const paths = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path');
     const text = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('text');
-    this.state = {paths: paths, text: text};
-    console.log(this.state.text);
+    const pathTextDict = {}
+    const pathsArray = Array.from(paths);
+
+    for(var i = 0; i< pathsArray.length; i++) {
+      const path = pathsArray[i];
+      const idNum = +path.id.split("_")[1];
+       const pathsText = text.namedItem(idNum);
+
+       pathTextDict[idNum] = pathsText;
+
+       console.log(idNum + " " + pathsText);
+    }
+
+    this.state = {paths: paths, pathTextDict: pathTextDict};
   }
 
   render() {
@@ -24,7 +36,7 @@ export class SvgImage extends React.Component {
       }
       const idNum = +path.id.split("_")[1];
       const countryState = path.id.split("_")[0] === 'Territory' ? this.props.countries[idNum] : null;
-      const countryName = path.id.split("_")[0] === 'Territory' ? this.props.names[idNum] : null;
+      const countryName = path.id.split("_")[0] === 'Territory' ? this.props.map.countryName[idNum] : null;
 
       var attackState = AttackingStateEnum.normal;
 
@@ -35,12 +47,8 @@ export class SvgImage extends React.Component {
 
       return (
         <ReactPath state={countryState} attackState={attackState} key={path.id}
-         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
+         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} text={this.state.pathTextDict[idNum]} onClick={this.props.onClick}/>
       );
-    });
-
-    const text = Array.from(this.state.text).map((text) => {
-      return (<text x={text.getAttribute('x')} y={text.getAttribute('y')}>0</text>)
     });
 
     return (
@@ -49,7 +57,6 @@ export class SvgImage extends React.Component {
 <rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
       <g>
         {paths}
-        {text}
      </g>
     </svg>)
   }
@@ -96,14 +103,15 @@ class ReactPath extends React.Component {
     }
 
     return (
-      <path d={this.props.d} style={customStyle} className={className} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
+      [<path d={this.props.d} style={customStyle} className={className} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
 
         // next line causes a significant increase in cpu usage
         onMouseEnter={() => this.onMouseEnter()} onMouseLeave={() => this.onMouseLeave()} >
         <title>
           {this.props.name}
         </title>
-      </path>
+      </path>,
+      this.props.text && <text x={this.props.text.getAttribute('x')} y={this.props.text.getAttribute('y')}>{this.props.state.soldiers}</text>]
     );
   }
 
