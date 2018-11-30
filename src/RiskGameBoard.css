@@ -1,0 +1,29 @@
+.flex-container {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  -ms-box-orient: horizontal;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  display: flex;
+  float: left;
+}
+
+.flex-start {
+  align-items: flex-start;
+}
+
+.center {
+  align-items: center;
+}
+
+.legend { list-style: none; }
+.legend li { float: left; margin-right: 20px; }
+.legend span { border: 1px solid #ccc; float: left; width: 15px; height: 15px; margin-right: 6px; }
+/* your colors */
+.legend .player0 { background-color: #ff0000; }
+.legend .player1 { background-color: #0000ff; }
