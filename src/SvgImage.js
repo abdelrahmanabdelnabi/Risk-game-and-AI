@@ -23,7 +23,7 @@ export class SvgImage extends React.Component {
       const idNum = path.id.split("_")[1];
 
       const countryState = path.id.split("_")[0] === 'Territory' ? this.props.countries[idNum] : null;
-      const countryName = path.id.split("_")[0] === 'Territory' ? this.props.names[idNum] : null;
+      const countryName = path.id.split("_")[0] === 'Territory' ? this.props.map.countryName[idNum] : null;
 
       var attackState = AttackingStateEnum.normal;
 
