@@ -191,7 +191,7 @@ export function BoardWithOptions(gameOptions) {
             <div style={{margin: "20px 20px 20px 20px"}}>
               <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
               defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={gameOptions.gameMap}
-              names={gameOptions.gameMap.countryName} onClick={(i) => this.handleClick(i)}/>
+              sonClick={(i) => this.handleClick(i)}/>
               <div id="ArmiesLayer_27" className="ujsSprite">
                 <div className="ujsTerritoryText" style={{left: "300px", top: "95px", color: "rgb(0, 0, 0)"}}>
                   {this.props.G.countries['3']['soldiers']}
