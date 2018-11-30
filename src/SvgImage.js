@@ -5,23 +5,24 @@ export class SvgImage extends React.Component {
   constructor(props) {
     super(props);
     var parsedDoc = new DOMParser().parseFromString(props.map.image, 'text/html');
-    this.state = {paths: parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path')};
+    const paths = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path');
+    const text = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('text');
+    this.state = {paths: paths, text: text};
+    console.log(this.state.text);
   }
 
   render() {
     const paths = Array.from(this.state.paths).map((path) => {
       const style = {
-        fill: path.style.fill,
-        fillOpacity: path.style.fillOpacity,
-        fillRule: path.style.fillRule,
-        strokeWidth: path.style.strokeWidth,
-        stroke: path.style.stroke,
-        strokeMiterlimit: path.style.strokeMiterlimit,
-        stokeOpacity: path.style.strokeOpacity
+        fill: path.style.fill || "rgb(200,200,200)",
+        fillOpacity: path.style.fillOpacity || 1,
+        fillRule: path.style.fillRule || "non-zero",
+        strokeWidth: path.style.strokeWidth || 3,
+        stroke: path.style.stroke || "rgb(0,255,0)",
+        strokeMiterlimit: path.style.strokeMiterlimit || 3,
+        stokeOpacity: path.style.strokeOpacity || 0
       }
-
-      const idNum = path.id.split("_")[1];
-
+      const idNum = +path.id.split("_")[1];
       const countryState = path.id.split("_")[0] === 'Territory' ? this.props.countries[idNum] : null;
       const countryName = path.id.split("_")[0] === 'Territory' ? this.props.names[idNum] : null;
 
@@ -38,12 +39,17 @@ export class SvgImage extends React.Component {
       );
     });
 
+    const text = Array.from(this.state.text).map((text) => {
+      return (<text x={text.getAttribute('x')} y={text.getAttribute('y')}>0</text>)
+    });
+
     return (
     <svg width="895" height="532" version="1.0" data-revision="112" style={{overflow: "visible"}} >
-    
+
 <rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
       <g>
         {paths}
+        {text}
      </g>
     </svg>)
   }
@@ -67,28 +73,27 @@ class ReactPath extends React.Component {
   render() {
     var className= "non-territory";
     const isTerritory = this.props.id.split("_")[0] === "Territory";
-    
+    const customStyle = {...this.props.style};
+
     if(isTerritory) {
       className = "territory";
 
-      this.props.style.fill =  playerTerritoryColor(this.props.state.owner);
+      customStyle.fill =  playerTerritoryColor(this.props.state.owner);
       if(this.state.hover)
-        this.props.style.strokeWidth = 3
+      customStyle.strokeWidth = 3
       else
-        this.props.style.strokeWidth = 1;
+      customStyle.strokeWidth = 1;
 
       if (this.props.attackState === AttackingStateEnum.attacking) {
         // we are the selected attacking territory: apply a differenet styling
-        this.props.style.fillOpacity = 0.5;
+        customStyle.fillOpacity = 0.5;
         className += " attacking";
       } else if (this.props.attackState === AttackingStateEnum.being_attacked) {
-        this.props.style.strokeWidth = 4;
-        this.props.style.stroke = "rgb(80,255,0)";
+        customStyle.strokeWidth = 4;
+        customStyle.stroke = "rgb(80,255,0)";
         className += " defending";
       }
     }
- 
-    const customStyle = {...this.props.style};
 
     return (
       <path d={this.props.d} style={customStyle} className={className} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
@@ -103,3 +108,4 @@ class ReactPath extends React.Component {
   }
 
 }
+

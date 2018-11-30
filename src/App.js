@@ -1,6 +1,7 @@
 import { Game } from 'boardgame.io/core';
 import { Client } from 'boardgame.io/react';
 import { RiskGameBoard } from './RiskGameBoard';
+import { usMap } from './maps/usmap';
 import { worldMap } from './maps/worldmap';
 
 // Return true if `countries` is in a winning configuration.
