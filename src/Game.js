@@ -21,7 +21,7 @@ export function createGame(gameOptions) {
       break;
     default: gameMap = worldMap;
   }
-  return Game({
+  const game = {
     setup: () => {
 
       const countries = {};
@@ -30,6 +30,18 @@ export function createGame(gameOptions) {
 
       for(var i = 0; i < numPlayers; i++)
         unassignedUnits[i] = gameOptions.unitsPerPlayer;
+
+      if (gameOptions.startWithRandomCountries) {
+        let owner = 0;
+        let keys = Object.keys(gameMap.countryName);
+        keys.sort(function() {return Math.random()-0.5;});
+        keys.map((key) => {
+          console.log(key);
+          countries[key] = {owner: owner.toString(), soldiers: 1};
+          unassignedUnits[Number(owner)]--;
+          owner = Number(!owner);
+        });
+      }
 
       return {
         countries: countries,
@@ -141,5 +153,15 @@ export function createGame(gameOptions) {
         }
       ]
     },
-  });
+  };
+
+  if(gameOptions.startWithRandomCountries) {
+    game.flow.phases.shift();
+    game.flow.phases[0].turnOrder = {
+      first: () => 0,
+      next: (G, ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers,
+    }
+  }
+
+  return Game(game);
 }
