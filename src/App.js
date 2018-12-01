@@ -2,6 +2,7 @@ import { Game } from 'boardgame.io/core';
 import { Client } from 'boardgame.io/react';
 import { BoardWithOptions } from './RiskGameBoard';
 import { worldMap } from './maps/worldmap';
+import { usMap } from './maps/usmap';
 
 // Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
@@ -10,9 +11,9 @@ function IsVictory(countries) {
 }
 
 const gameOptions = {
-  gameMap: worldMap,
+  gameMap: worldMap, // to use the US map, import it and use it in place of worldMap here
   players: [{name: "human", isAI: false}, {name: "passive", isAI: true}],
-  unitsPerPlayer: 25,
+  unitsPerPlayer: 27,
   useDice: false,
   // startWithRandomCountries: false
 };

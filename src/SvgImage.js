@@ -5,45 +5,64 @@ export class SvgImage extends React.Component {
   constructor(props) {
     super(props);
     var parsedDoc = new DOMParser().parseFromString(props.map.image, 'text/html');
-    this.state = {paths: parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path')};
+    const paths = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path');
+    const text = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('text');
+    const lines = parsedDoc.getElementsByTagName('line');
+
+    const pathTextDict = {}
+    const pathsArray = Array.from(paths);
+
+    for(var i = 0; i< pathsArray.length; i++) {
+      const path = pathsArray[i];
+      const idNum = +path.id.split("_")[1];
+      const pathsText = text.namedItem(idNum);
+      pathTextDict[idNum] = pathsText;
+    }
+
+    this.state = {paths: paths, pathTextDict: pathTextDict, lines: lines};
   }
 
   render() {
     const paths = Array.from(this.state.paths).map((path) => {
       const style = {
-        fill: path.style.fill,
-        fillOpacity: path.style.fillOpacity,
-        fillRule: path.style.fillRule,
-        strokeWidth: path.style.strokeWidth,
-        stroke: path.style.stroke,
-        strokeMiterlimit: path.style.strokeMiterlimit,
-        stokeOpacity: path.style.strokeOpacity
+        fill: path.style.fill || "rgb(200,200,200)",
+        fillOpacity: path.style.fillOpacity || 1,
+        fillRule: path.style.fillRule || "non-zero",
+        strokeWidth: path.style.strokeWidth || 3,
+        stroke: path.style.stroke || "rgb(0,255,0)",
+        strokeMiterlimit: path.style.strokeMiterlimit || 3,
+        stokeOpacity: path.style.strokeOpacity || 0
       }
-
-      const idNum = path.id.split("_")[1];
-
+      const idNum = +path.id.split("_")[1];
       const countryState = path.id.split("_")[0] === 'Territory' ? this.props.countries[idNum] : null;
       const countryName = path.id.split("_")[0] === 'Territory' ? this.props.map.countryName[idNum] : null;
 
       var attackState = AttackingStateEnum.normal;
 
-      if(this.props.attackingCountry === idNum)
+      if(+this.props.attackingCountry === idNum)
         attackState = AttackingStateEnum.attacking;
       else if(this.props.defendingCountries.indexOf(+idNum) > -1)
         attackState = AttackingStateEnum.being_attacked;
 
       return (
         <ReactPath state={countryState} attackState={attackState} key={path.id}
-         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} onClick={this.props.onClick}/>
+         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} text={this.state.pathTextDict[idNum]} onClick={this.props.onClick}/>
       );
+    });
+
+    const lines = Array.from(this.state.lines).map((line, idx) => {
+      return(<line key={idx} x1={line.getAttribute('x1')} y1={line.getAttribute('y1')}
+      x2={line.getAttribute('x2')} y2={line.getAttribute('y2')} style={{stroke: "rgb(0,0,0)", strokeWidth: 1}}></line>)
+
     });
 
     return (
     <svg width="895" height="532" version="1.0" data-revision="112" style={{overflow: "visible"}} >
-    
-<rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
+
+    <rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
       <g>
         {paths}
+        {lines}
      </g>
     </svg>)
   }
@@ -67,39 +86,40 @@ class ReactPath extends React.Component {
   render() {
     var className= "non-territory";
     const isTerritory = this.props.id.split("_")[0] === "Territory";
-    
+    const customStyle = {...this.props.style};
+
     if(isTerritory) {
       className = "territory";
 
-      this.props.style.fill =  playerTerritoryColor(this.props.state.owner);
+      customStyle.fill =  playerTerritoryColor(this.props.state.owner);
       if(this.state.hover)
-        this.props.style.strokeWidth = 3
+      customStyle.strokeWidth = 3
       else
-        this.props.style.strokeWidth = 1;
+      customStyle.strokeWidth = 1;
 
       if (this.props.attackState === AttackingStateEnum.attacking) {
         // we are the selected attacking territory: apply a differenet styling
-        this.props.style.fillOpacity = 0.5;
+        customStyle.fillOpacity = 0.5;
         className += " attacking";
       } else if (this.props.attackState === AttackingStateEnum.being_attacked) {
-        this.props.style.strokeWidth = 4;
-        this.props.style.stroke = "rgb(80,255,0)";
+        customStyle.strokeWidth = 4;
+        customStyle.stroke = "rgb(80,255,0)";
         className += " defending";
       }
     }
- 
-    const customStyle = {...this.props.style};
 
     return (
-      <path d={this.props.d} style={customStyle} className={className} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
+      [<path d={this.props.d} style={customStyle} className={className} id={this.props.id} onClick={() => this.props.onClick(this.props.id)}
 
         // next line causes a significant increase in cpu usage
         onMouseEnter={() => this.onMouseEnter()} onMouseLeave={() => this.onMouseLeave()} >
         <title>
           {this.props.name}
         </title>
-      </path>
+      </path>,
+      this.props.text && <text fontWeight={"bold"} x={this.props.text.getAttribute('x')} y={this.props.text.getAttribute('y')}>{this.props.state.soldiers}</text>]
     );
   }
 
 }
+
