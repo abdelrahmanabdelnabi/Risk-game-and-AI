@@ -35,7 +35,7 @@ export class GameOptionsPage extends React.Component {
     if (mode.value === 'simulation') {
       this.setState({
         ...this.state,
-        players: [{name: 'passive', isAI: true}, {name: 'aggresive', isAI: true}],
+        players: [{name: 'passive', isAI: true}, {name: 'aggressive', isAI: true}],
         gameMode: mode.value
       });
     } else {
@@ -81,7 +81,7 @@ export class GameOptionsPage extends React.Component {
     let players = [
       {name: 'human', isAI: false},
       {name: 'passive', isAI: true},
-      {name: 'aggresive', isAI: true},
+      {name: 'aggressive', isAI: true},
       {name: 'pacifist', isAI: true},
       {name: 'greedy', isAI: true},
       {name: 'A_star', isAI: true},
