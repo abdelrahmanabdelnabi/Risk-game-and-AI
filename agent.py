@@ -26,12 +26,13 @@ class State:
         self.current_player = str(data['ctx']['currentPlayer'])
         self.cities = data['G']['countries']
         self.adj_list = data['adjacencyList']
+        for city in self.adj_list:
+            self.adj_list[city] = [str(x) for x in self.adj_list[city]]
         self.agent = data['agent']
-        self.phase = data['ctx']["phase"]
+        self.phase = data['ctx']['phase']
         self.unassigned_units = data['G']['unassignedUnits'][self.current_player]
         self.dict_player_cities, self.dict_city_troops = self.seperate_cities()
         self.opponent_adj_list = self.get_opponent_neighbours()
-
 
     # given a city's id, it returns its owner (player_id)
     def get_player_of_city(self, city_id):
@@ -48,7 +49,7 @@ class State:
                     opponent_cities.append(city)
         return opponent_cities
 
-    # given a list of cities' ids, 
+    # given a list of cities' ids,
     # it returns a list of corresponding troops in each city
     def get_troops_of_cities(self, cities_ids):
         troops = []
@@ -56,7 +57,7 @@ class State:
             troops.append(self.dict_city_troops[city_id])
         return troops
 
-    # return the city with least or most troops 
+    # return the city with least or most troops
     # for the current player or his opponents
     def get_city(self, player_flag, troops_flag):
         # cities of current player
@@ -108,7 +109,7 @@ class Agent:
         self.function = Functions()
         self.problem = Problem()
         self.agents = {
-            'passive': self.passive_agent, 
+            'passive': self.passive_agent,
             'pacifist': self.pacifist_agent,
             'aggressive': self.aggressive_agent,
             'greedy': self.greedy_agent,
@@ -118,70 +119,127 @@ class Agent:
         self.target_list = self.agents.get(self.state.agent)()
         print('THE TARGET LIST =', self.target_list)
 
-
     def return_format(self, move_list):
         response = defaultdict(list)
         for tup in move_list:
             response['moves'].append({'name': tup[0], 'sourceId': tup[1], 'destId': tup[2], 'numSoldiers': tup[3]})
         return json.dumps(response)
 
+    def occupy(self):
+        country_to_occupy =  self.state.dict_player_cities[None][0]
+        return self.return_format([("occupy", country_to_occupy, 0, 1)])
+
+    def reinforce_weakest(self):
+        weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
+        return self.return_format([("reinforce", weakest_city, 0, 1)])
+
+    def reinforce_strongest(self):
+        strongest_city = self.state.get_city(Player.CURRENT, Troops.MAX)
+        return self.return_format([("reinforce", strongest_city, 0, 1)])
+
+    def redistribute_troops(self, city1, city2):
+        died_troops = self.state.dict_city_troops[city2] # troops that will die
+        self.state.dict_city_troops[city1] -= died_troops
+        self.state.dict_city_troops[city2] = 0
+        owner = self.state.get_player_of_city(city2)
+        # append to the new player
+        self.state.dict_player_cities[self.state.current_player].append(city2)
+        # remove from the old player
+        self.state.dict_player_cities[owner].remove(city2)
+        # invert opponent lists
+        self.state.opponent_adj_list = self.state.get_opponent_neighbours()
+        # redistribute troops
+        try:
+            bsr1 = self.function.BSR_(self.state, city1, self.state.opponent_adj_list[city1], 1)
+        except:
+            bsr1 = 0
+        try:
+            bsr2 = self.function.BSR_(self.state, city2, self.state.opponent_adj_list[city2], 1)
+        except:
+            bsr2 = 0
+        if bsr1 == 0 and bsr2 == 0:
+            nbsr1 = 0.5 # nbsr2 = 0.5
+        else:
+            nbsr1 = bsr1 / (bsr1 + bsr2)
+            # nbsr2 = bsr2 / (bsr1 + bsr2)
+        val = self.state.dict_city_troops[city1]
+        self.state.dict_city_troops[city1] = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1
+        self.state.dict_city_troops[city2] = val - self.state.dict_city_troops[city1]
+        return self.state.dict_city_troops[city2]
+
     def passive_agent(self):
         if self.state.phase == "Occupation":
-            # return any un-occupied country
-            country_to_occupy =  self.state.dict_player_cities[None][0]
-            return self.return_format([("occupy", country_to_occupy, 0, 1)])
+            return self.occupy()
         elif self.state.phase == "Reinforce Countries":
-            weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
-            return self.return_format([("reinforce", weakest_city, 0, 1)])
+            return self.reinforce_weakest()
         elif self.state.phase == "War":
             weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
             return self.return_format([("reinforce", weakest_city, 0, self.state.unassigned_units)])
         return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def pacifist_agent(self):
-        weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN)
-        weakest_opponent = self.state.get_city(Player.NOT_CURRENT, Troops.MIN)
-        possible_attacking_cities = []
-
-        for city in self.state.opponent_adj_list[weakest_opponent]:
-            if self.state.current_player == self.state.get_player_of_city(city):
-                possible_attacking_cities.append(city)
-        
-        if len(possible_attacking_cities) != 0:
-            possible_troops = self.state.get_troops_of_cities(possible_attacking_cities)
-            attacker = possible_attacking_cities[np.argmax(possible_troops)]
+        if self.state.phase == "Occupation":
+            return self.occupy()
+        elif self.state.phase == "Reinforce Countries":
+            return self.reinforce_weakest()
+        elif self.state.phase == "War":
+            weakest_city = self.state.get_city(Player.CURRENT, Troops.MIN) # to reinforce
+            self.state.dict_city_troops[weakest_city] += self.state.unassigned_units
+            # during war, it attacks an opponent city which has least troops (if it can)
+            opponent_cities = self.state.get_opponent_cities() # current player's nonoccupied cities
+            opponent_troops = self.state.get_troops_of_cities(opponent_cities)
+            # sort cities according to their number of troops ascendingly
+            tuples = []
+            for idx, city in enumerate(opponent_cities):
+                tuples.append((city, opponent_troops[idx]))
+            tuples.sort(key=lambda x:x[1])
+            for pair in tuples:
+                possible_attackers = []
+                if pair[0] in self.state.opponent_adj_list:
+                    for possible_attacker in self.state.opponent_adj_list[pair[0]]:
+                        if self.state.current_player == self.state.get_player_of_city(possible_attacker) and self.state.dict_city_troops[possible_attacker] > self.state.dict_city_troops[pair[0]] + 1:
+                            possible_attackers.append(possible_attacker)
+                    if len(possible_attackers) != 0:
+                        possible_troops = self.state.get_troops_of_cities(possible_attackers)
+                        attacker = possible_attackers[np.argmax(possible_troops)]
+                        return self.return_format([
+                            ("reinforce", weakest_city, 0, self.state.unassigned_units),
+                            ("attack", attacker, pair[0], self.redistribute_troops(attacker, pair[0]))
+                        ])
+            # can't attack any city at all
             return self.return_format([
-                ("reinforce", weakest_city, 0, self.state.unassigned_units),
-                ("attack", attacker, weakest_opponent, 0)
+                ("reinforce", weakest_city, 0, self.state.unassigned_units)
             ])
-        
-        return self.return_format([
-            ("reinforce", weakest_city, 0, self.state.unassigned_units)
-        ])
-
+        return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def aggressive_agent(self):
-        strongest_city = self.state.get_city(Player.CURRENT, Troops.MAX)
-        troops_in_strongest_city = self.state.dict_city_troops[strongest_city]
-
-        adjacent_opponents = self.state.opponent_adj_list[strongest_city]
-        adjacent_troops = self.state.get_troops_of_cities(adjacent_opponents)
-        # aggressive agent will attack his strongest opponent
-        # but must have less troops than his strongest city
-        for idx, adj_troop in enumerate(adjacent_troops):
-            if adj_troop >= troops_in_strongest_city:
-                del adjacent_opponents[idx]
-                del adjacent_troops[idx]
-        
-        if len(adjacent_opponents) != 0:
-            destination = adjacent_opponents[np.argmax(adjacent_troops)]
+        if self.state.phase == "Occupation":
+            return self.occupy()
+        elif self.state.phase == "Reinforce Countries":
+            return self.reinforce_strongest()
+        elif self.state.phase == "War":
+            strongest_city = self.state.get_city(Player.CURRENT, Troops.MAX)
+            self.state.dict_city_troops[strongest_city] += self.state.unassigned_units
+            if strongest_city in self.state.opponent_adj_list:
+                troops_in_strongest_city = self.state.dict_city_troops[strongest_city]
+                adjacent_opponents = self.state.opponent_adj_list[strongest_city]
+                adjacent_troops = self.state.get_troops_of_cities(adjacent_opponents)
+                # aggressive agent will attack his strongest opponent whose troops
+                # must be less by two or more than those in agent's strongest city
+                for idx, adj_troop in enumerate(adjacent_troops):
+                    if adj_troop >= troops_in_strongest_city - 1:
+                        del adjacent_opponents[idx]
+                        del adjacent_troops[idx]
+                if len(adjacent_opponents) != 0:
+                    destination = adjacent_opponents[np.argmax(adjacent_troops)]
+                    return self.return_format([
+                        ("reinforce", strongest_city, 0, self.state.unassigned_units),
+                        ("attack", strongest_city, destination, self.redistribute_troops(strongest_city, destination))
+                    ])
             return self.return_format([
-                ("reinforce", strongest_city, 0, self.state.unassigned_units),
-                ("attack", strongest_city, destination, 0)
+                ("reinforce", strongest_city, 0, self.state.unassigned_units)
             ])
-        return self.return_format([
-            ("reinforce", strongest_city, 0, self.state.unassigned_units)
-        ])
+        return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def informed_search(self, informed_type):
         node = Node(self.state, None, None, 0, 0)
@@ -213,43 +271,43 @@ class Agent:
                         frontier_heap.add(child, priority=child_total_path)
                 else:
                     heap_realtime.add(node, priority=cost)
-            
+
             elif informed_type == Informed.GREEDY:
                 for action in self.problem.get_actions(node.state):
                     child = self.problem.child_node(node, action)
                     child_path_to_goal = self.function.total_BSR(child.state)
                     frontier_heap.add(child, priority=child_path_to_goal)
-            
+
             else: # Informed.A_STAR_NORMAL
                 for action in self.problem.get_actions(node.state):
                     child = self.problem.child_node(node, action)
                     child_path_to_goal = self.function.total_BSR(child.state)
                     child_total_path = child.path_cost + child_path_to_goal
                     frontier_heap.add(child, priority=child_total_path)
-            
+
     def greedy_agent(self):
         moves = self.ai_reinforce()
         node, output = self.informed_search(Informed.GREEDY)
         if output == 'success':
-            attack = self.back_track(node)    
+            attack = self.back_track(node)
             moves.append(("attack", attack[0], attack[1], 0))
         return self.return_format(moves)
-    
+
     def A_star_agent(self):
         moves = self.ai_reinforce()
         node, output = self.informed_search(Informed.A_STAR_NORMAL)
         if output == 'success':
-            attack = self.back_track(node)    
+            attack = self.back_track(node)
             moves.append(("attack", attack[0], attack[1], 0))
         return self.return_format(moves)
-    
+
     def A_star_realtime_agent(self):
         moves = self.ai_reinforce()
         node, _ = self.informed_search(Informed.A_STAR_REALTIME)
         attack = self.back_track(node)
         moves.append(("attack", attack[0], attack[1], 0))
         return moves
-    
+
     def back_track(self, node):
         steps = list()
         while node.parent != None:
@@ -282,7 +340,6 @@ class Agent:
 class Functions:
     def heuristic(self, state):
         search_cities = state.dict_player_cities[state.current_player]
-        # print('Search cities for heuristics =', search_cities)
         opponent_BSR = {}
         for city in search_cities:
             try:
@@ -365,7 +422,7 @@ class Problem:
         cost = next_state.dict_city_troops[attack[1]] # troops that will die
         next_state.dict_city_troops[attack[0]] -= next_state.dict_city_troops[attack[1]]
         next_state.dict_city_troops[attack[1]] = 0
-        
+
         owner = next_state.get_player_of_city(attack[1])
         # append to the new player
         next_state.dict_player_cities[next_state.current_player].append(attack[1])
@@ -388,10 +445,10 @@ class Problem:
             nbsr1 = bsr1 / (bsr1 + bsr2)
             # nbsr2 = bsr2 / (bsr1 + bsr2)
         val = next_state.dict_city_troops[attack[0]]
-        next_state.dict_city_troops[attack[0]] = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1 
+        next_state.dict_city_troops[attack[0]] = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1
         next_state.dict_city_troops[attack[1]] = val - next_state.dict_city_troops[attack[0]]
         return next_state, cost
-    
+
     def goal_test(self, state):
         for player in state.dict_player_cities:
             if player != state.current_player and len(state.dict_player_cities[player]) != 0:
