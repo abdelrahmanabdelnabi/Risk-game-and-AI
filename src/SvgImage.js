@@ -7,20 +7,19 @@ export class SvgImage extends React.Component {
     var parsedDoc = new DOMParser().parseFromString(props.map.image, 'text/html');
     const paths = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('path');
     const text = parsedDoc.getElementsByTagName('svg')[0].getElementsByTagName('text');
+    const lines = parsedDoc.getElementsByTagName('line');
+
     const pathTextDict = {}
     const pathsArray = Array.from(paths);
 
     for(var i = 0; i< pathsArray.length; i++) {
       const path = pathsArray[i];
       const idNum = +path.id.split("_")[1];
-       const pathsText = text.namedItem(idNum);
-
-       pathTextDict[idNum] = pathsText;
-
-       console.log(idNum + " " + pathsText);
+      const pathsText = text.namedItem(idNum);
+      pathTextDict[idNum] = pathsText;
     }
 
-    this.state = {paths: paths, pathTextDict: pathTextDict};
+    this.state = {paths: paths, pathTextDict: pathTextDict, lines: lines};
   }
 
   render() {
@@ -51,12 +50,19 @@ export class SvgImage extends React.Component {
       );
     });
 
+    const lines = Array.from(this.state.lines).map((line, idx) => {
+      return(<line key={idx} x1={line.getAttribute('x1')} y1={line.getAttribute('y1')}
+      x2={line.getAttribute('x2')} y2={line.getAttribute('y2')} style={{stroke: "rgb(0,0,0)", strokeWidth: 1}}></line>)
+
+    });
+
     return (
     <svg width="895" height="532" version="1.0" data-revision="112" style={{overflow: "visible"}} >
 
     <rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
       <g>
         {paths}
+        {lines}
      </g>
     </svg>)
   }
@@ -111,7 +117,7 @@ class ReactPath extends React.Component {
           {this.props.name}
         </title>
       </path>,
-      this.props.text && <text x={this.props.text.getAttribute('x')} y={this.props.text.getAttribute('y')}>{this.props.state.soldiers}</text>]
+      this.props.text && <text fontWeight={"bold"} x={this.props.text.getAttribute('x')} y={this.props.text.getAttribute('y')}>{this.props.state.soldiers}</text>]
     );
   }
 
