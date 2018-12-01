@@ -3,7 +3,7 @@ import ast
 import numpy as np
 from collections import defaultdict
 from enum import Enum
-from math import ceil, floor
+from math import ceil, floor, inf
 from heap import Heap
 from copy import deepcopy
 
@@ -115,6 +115,7 @@ class Agent:
             'greedy': self.greedy_agent,
             'A_star': self.A_star_agent,
             'A_star_realtime': self.A_star_realtime_agent,
+            'minimax': self.minimax
         }
         self.target_list = self.agents.get(self.state.agent)()
         print('THE TARGET LIST =', self.target_list)
@@ -212,6 +213,54 @@ class Agent:
             ])
         return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
+    def minimax(self):
+      node = Node(self.state, None, None, 0, 0)
+      child, _ = maximize(self, node, -inf, inf)
+      return child
+
+    def _minimize(self, node, alpha, beta):
+      if self.problem.goal_test(node.state):
+        return None, inf
+
+      minChild, minUtil = None, inf
+
+      for action in self.problem.get_actions(node.state):
+        child = self.problem.child_node(node, action)
+
+        _, util = self._maximize(child, alpha, beta)
+
+        if util < minUtil:
+          minChild, minUtil = child, util
+
+        if minUtil <= alpha:
+          break
+
+        if minUtil < beta:
+          beta = minUtil
+
+      return minChild, minUtil
+
+    def _maximize(self, node, alpha, beta):
+      if self.problem.goal_test(self.state):
+        return None, self.problem.eval(self.state)
+
+      maxChild, maxUtil = None, -inf
+
+      for action in self.problem.get_actions(node.state):
+        child = self.problem.child_node(node, action)
+         _, util = self._minimize(child, alpha, beta)
+
+         if util > maxUtil:
+           maxChild, maxUtil = child, util
+
+          if maxUtil >= beta:
+            break
+
+          if maxUtil > alpha:
+            alpha = maxUtil
+
+      return maxChild, maxUtil
+
     def aggressive_agent(self):
         if self.state.phase == "Occupation":
             return self.occupy()
@@ -224,7 +273,7 @@ class Agent:
                 troops_in_strongest_city = self.state.dict_city_troops[strongest_city]
                 adjacent_opponents = self.state.opponent_adj_list[strongest_city]
                 adjacent_troops = self.state.get_troops_of_cities(adjacent_opponents)
-                # aggressive agent will attack his strongest opponent whose troops
+                # aggressive agentself will attack his strongest opponent whose troops
                 # must be less by two or more than those in agent's strongest city
                 for idx, adj_troop in enumerate(adjacent_troops):
                     if adj_troop >= troops_in_strongest_city - 1:
@@ -417,7 +466,7 @@ class Problem:
         attacks = action.split('_')
         attack = []
         for string in attacks:
-            attack.append(int(string))
+            attack.append(string)
         next_state = deepcopy(current_state)
         cost = next_state.dict_city_troops[attack[1]] # troops that will die
         next_state.dict_city_troops[attack[0]] -= next_state.dict_city_troops[attack[1]]
@@ -467,3 +516,7 @@ class Problem:
     def child_node(self, node, action):
         next_state, cost = self.next_state(node.state, action)
         return Node(next_state, node, action, node.path_cost + cost, node.depth + 1)
+
+    def eval(self, state):
+      # TODO
+      return 0
