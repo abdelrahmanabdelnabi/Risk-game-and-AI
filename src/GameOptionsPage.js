@@ -10,10 +10,15 @@ export class GameOptionsPage extends React.Component {
     super(props);
     this.state = {
       gameMode: 'playing',
-      players: ['human', 'passive'],
+      gameMap: 'World',
+      players: [
+        {name: 'human', isAI: false},
+        {name: 'passive', isAI: true}
+      ],
       startWithRandomCountries: false,
       useDice: false
     };
+    this.handleMapChange = this.handleMapChange.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
     this.handleFirstPlayerChange = this.handleFirstPlayerChange.bind(this);
     this.handleSecondPlayerChange = this.handleSecondPlayerChange.bind(this);
@@ -22,11 +27,23 @@ export class GameOptionsPage extends React.Component {
     this.handleFormSubmit = this.handleFormSubmit.bind(this);
   }
 
+  handleMapChange(map) {
+    this.setState({...this.state, gameMap: map.value})
+  }
+
   handleModeChange(mode) {
     if (mode.value === 'simulation') {
-      this.setState({...this.state, players: ['passive', 'aggresive'], gameMode: mode.value});
+      this.setState({
+        ...this.state,
+        players: [{name: 'passive', isAI: true}, {name: 'aggresive', isAI: true}],
+        gameMode: mode.value
+      });
     } else {
-      this.setState({...this.state, players: ['human', 'passive'], gameMode: mode.value});
+      this.setState({
+        ...this.state,
+        players: [{name: 'human', isAI: false}, {name: 'passive', isAI: true}],
+        gameMode: mode.value
+      });
     }
   }
 
@@ -48,20 +65,28 @@ export class GameOptionsPage extends React.Component {
 
   handleFormSubmit(formSubmitEvent) {
     formSubmitEvent.preventDefault();
-    console.log('LET THE GAME BEGIN');
+    const options = {
+      gameMap: this.state.gameMap,
+      useDice: this.state.useDice,
+      startWithRandomCountries: this.state.startWithRandomCountries,
+      players: this.state.players,
+      unitsPerPlayer: 27
+    }
+    this.props.onOptionsSubmit(options);
   }
 
   render() {
     let gameModes = ['playing', 'simulation'];
+    let maps = ['World', 'USA'];
     let players = [
-      'human',
-      'passive',
-      'aggresive',
-      'pacifist',
-      'greedy',
-      'a*',
-      'real-time-a*',
-      'minimax'
+      {name: 'human', isAI: false},
+      {name: 'passive', isAI: true},
+      {name: 'aggresive', isAI: true},
+      {name: 'pacifist', isAI: true},
+      {name: 'greedy', isAI: true},
+      {name: 'A_star', isAI: true},
+      {name: 'A_star_realtime', isAI: true},
+      {name: 'minimax', isAI: true}
     ];
     return (
       <fieldset className="game-options">
@@ -90,6 +115,23 @@ export class GameOptionsPage extends React.Component {
                   <ul className="flex-container center">
                     <li>
                       <div>
+                        <span>Game Map:</span>
+                      </div>
+                    </li>
+                    <li>
+                      <SelectList
+                        className="option-field"
+                        data={maps}
+                        value={this.state.gameMap}
+                        onChange={value => this.handleMapChange({value})}
+                      />
+                    </li>
+                  </ul>
+                </div>
+                <div style={{"margin":"10px"}}>
+                  <ul className="flex-container center">
+                    <li>
+                      <div>
                         <span>Player 1:</span>
                       </div>
                     </li>
@@ -100,6 +142,7 @@ export class GameOptionsPage extends React.Component {
                         disabled
                         className="option-field"
                         data={players}
+                        textField='name'
                         value={this.state.players[0]}
                         onChange={value => this.handleFirstPlayerChange({value})}
                       />
@@ -107,9 +150,10 @@ export class GameOptionsPage extends React.Component {
                     {
                       this.state.gameMode === 'simulation' &&
                       <Combobox
-                        disabled={['human']}
+                        disabled={[players[0]]}
                         className="option-field"
                         data={players}
+                        textField='name'
                         value={this.state.players[0]}
                         onChange={value => this.handleFirstPlayerChange({value})}
                       />
@@ -130,6 +174,7 @@ export class GameOptionsPage extends React.Component {
                       <Combobox
                         className="option-field"
                         data={players}
+                        textField='name'
                         value={this.state.players[1]}
                         onChange={value => this.handleSecondPlayerChange({value})}
                       />
@@ -137,9 +182,10 @@ export class GameOptionsPage extends React.Component {
                       {
                         this.state.gameMode === 'simulation' &&
                         <Combobox
-                          disabled={['human']}
+                          disabled={[players[0]]}
                           className="option-field"
                           data={players}
+                          textField='name'
                           value={this.state.players[1]}
                           onChange={value => this.handleSecondPlayerChange({value})}
                         />
@@ -172,7 +218,7 @@ export class GameOptionsPage extends React.Component {
                   </ul>
                 </div>
               </li>
-              <a className="start-btn">START</a>
+              <a onClick={this.handleFormSubmit} className="start-btn">START</a>
             </ul>
           </form>
       </fieldset>
