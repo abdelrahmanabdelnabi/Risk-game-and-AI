@@ -4,10 +4,15 @@ import { BoardWithOptions } from './RiskGameBoard';
 import { worldMap } from './maps/worldmap';
 import { usMap } from './maps/usmap';
 
+function uniques(array) {
+  return Array.from(new Set(array));;
+}
+
 // Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
   // TODO
-  return false;
+  const ownersList = Object.keys(countries).map((key) => countries[key].owner)
+  return uniques(ownersList).length === 1;
 }
 
 const gameOptions = {

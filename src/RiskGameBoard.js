@@ -221,10 +221,15 @@ export function BoardWithOptions(gameOptions) {
               <h3>Selected Country: {gameOptions.gameMap.countryName[this.state.selectedCountry]}</h3>
             }
 
-              {
-                this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
-                <p>Attack your enemies or <button onClick={() => this.endTurnHandler()}>End Turn</button></p>
-              }
+            {
+              this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
+              <p>Attack your enemies or <button onClick={() => this.endTurnHandler()}>End Turn</button></p>
+            }
+
+            {
+              this.props.ctx.gameover &&
+              <h1>Winner: player {this.props.ctx.gameover.winner}</h1>
+            }
 
               <span className="dice dice-3" title="Dice 1"></span>
               <span className="dice dice-6" title="Dice 2"></span>

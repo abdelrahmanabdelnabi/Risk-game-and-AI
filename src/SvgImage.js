@@ -45,8 +45,8 @@ export class SvgImage extends React.Component {
         attackState = AttackingStateEnum.being_attacked;
 
       return (
-        <ReactPath state={countryState} attackState={attackState} key={path.id}
-         d={path.getAttribute('d')} style={style} id={path.id} name={countryName} text={this.state.pathTextDict[idNum]} onClick={this.props.onClick}/>
+        <ReactPath key={path.id} state={countryState} attackState={attackState} d={path.getAttribute('d')}
+        style={style} id={path.id} name={countryName} text={this.state.pathTextDict[idNum]} onClick={this.props.onClick}/>
       );
     });
 
