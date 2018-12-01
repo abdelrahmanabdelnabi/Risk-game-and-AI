@@ -36,7 +36,6 @@ export function createGame(gameOptions) {
         let keys = Object.keys(gameMap.countryName);
         keys.sort(function() {return Math.random()-0.5;});
         keys.map((key) => {
-          console.log(key);
           countries[key] = {owner: owner.toString(), soldiers: 1};
           unassignedUnits[Number(owner)]--;
           owner = Number(!owner);
