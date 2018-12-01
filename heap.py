@@ -9,7 +9,7 @@ class Heap:
 		return heappop(self.pq)
 
 	def decrease_key(self, node, new_value):
-		for idx, val in enumerate(self.pq):
+		for idx, _ in enumerate(self.pq):
 			if node.state.equals(self.pq[idx][1].state):
 				self.pq[idx] = (new_value, node)
 				heapify(self.pq)
