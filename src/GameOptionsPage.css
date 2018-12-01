@@ -1,0 +1,54 @@
+.flex-container {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  -ms-box-orient: horizontal;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -moz-flex;
+  display: -webkit-flex;
+  display: flex;
+  float: left;
+}
+
+.flex-start {
+  align-items: flex-start;
+}
+
+.center {
+  align-items: center;
+}
+
+.start-btn{
+  display: inline-block;
+  text-decoration: none;
+  color: #2E8B57;
+  width: 120px;
+  height: 120px;
+  line-height: 120px;
+  border-radius: 50%;
+  border: solid 2px #2E8B57;
+  text-align: center;
+  vertical-align: middle;
+  overflow: hidden;
+  font-weight: bold;
+  transition: .4s;
+  margin: 60px;
+}
+
+.start-btn:hover {
+    background: #00FA9A;
+}
+
+.game-options {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 10px
+}
+
+.option-field {
+  max-width: 200px;
+  margin: 20px;
+}
