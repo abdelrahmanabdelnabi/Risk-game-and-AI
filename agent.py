@@ -1,6 +1,7 @@
 import json
 import ast
 import numpy as np
+import operator
 from collections import defaultdict
 from enum import Enum
 from math import ceil, floor, inf
@@ -161,10 +162,13 @@ class Agent:
         if bsr1 == 0 and bsr2 == 0:
             nbsr1 = 0.5 # nbsr2 = 0.5
         else:
-            nbsr1 = bsr1 / (bsr1 + bsr2)
-            # nbsr2 = bsr2 / (bsr1 + bsr2)
+            nbsr1 = bsr1 / (bsr1 + bsr2)       # nbsr2 = bsr2 / (bsr1 + bsr2)
         val = self.state.dict_city_troops[city1]
-        self.state.dict_city_troops[city1] = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1
+        val1 = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1
+        if val > val1:
+            self.state.dict_city_troops[city1] = val1
+        else: # val = val1
+            self.state.dict_city_troops[city1] = val1 - 1
         self.state.dict_city_troops[city2] = val - self.state.dict_city_troops[city1]
         return self.state.dict_city_troops[city2]
 
@@ -292,70 +296,84 @@ class Agent:
 
     def informed_search(self, informed_type):
         node = Node(self.state, None, None, 0, 0)
-
         if self.problem.goal_test(node.state):
             return node, "success"
-
         frontier_heap = Heap()
         frontier_heap.add(node, priority=node.path_cost)
-        heap_realtime = Heap()
-
+        heap_limit = Heap()
         while True:
             if not frontier_heap.pq:
-                if informed_type == Informed.A_STAR_REALTIME:
-                    _, min_ = heap_realtime.pop()
-                    return min_, "empty, realtime"
+                if informed_type == Informed.GREEDY:
+                    return node, "empty, greedy"
                 else:
-                    return node, "empty, normal"
+                    _, min_ = heap_limit.pop()
+                    return min_, "empty, reached limit"
 
             cost, node = frontier_heap.pop()
             if self.problem.goal_test(node.state):
                 return node, "success"
-            if informed_type == Informed.A_STAR_REALTIME:
-                if node.depth < 4:
+
+            if informed_type == Informed.GREEDY:
+                for action in self.problem.get_actions(node.state):
+                    child = self.problem.child_node(node, action)
+                    child_path_to_goal = self.function.total_BSR(child.state)
+                    frontier_heap.add(child, priority=child_path_to_goal)
+
+            else: # Informed.A_STAR_REALTIME or Informed.A_STAR_NORMAL
+                limit = 3 if informed_type == Informed.A_STAR_REALTIME else 10
+                if node.depth < limit:
                     for action in self.problem.get_actions(node.state):
                         child = self.problem.child_node(node, action)
                         child_path_to_goal = self.function.total_BSR(child.state)
                         child_total_path = child.path_cost + child_path_to_goal
                         frontier_heap.add(child, priority=child_total_path)
                 else:
-                    heap_realtime.add(node, priority=cost)
-
-            elif informed_type == Informed.GREEDY:
-                for action in self.problem.get_actions(node.state):
-                    child = self.problem.child_node(node, action)
-                    child_path_to_goal = self.function.total_BSR(child.state)
-                    frontier_heap.add(child, priority=child_path_to_goal)
-
-            else: # Informed.A_STAR_NORMAL
-                for action in self.problem.get_actions(node.state):
-                    child = self.problem.child_node(node, action)
-                    child_path_to_goal = self.function.total_BSR(child.state)
-                    child_total_path = child.path_cost + child_path_to_goal
-                    frontier_heap.add(child, priority=child_total_path)
+                    print('=========> COST =', cost)
+                    heap_limit.add(node, priority=cost)
 
     def greedy_agent(self):
-        moves = self.ai_reinforce()
-        node, output = self.informed_search(Informed.GREEDY)
-        if output == 'success':
-            attack = self.back_track(node)
-            moves.append(("attack", attack[0], attack[1], 0))
-        return self.return_format(moves)
+        if self.state.phase == "Occupation":
+            return self.occupy()
+        elif self.state.phase == "Reinforce Countries":
+            return self.return_format(ai_reinforce(self.state))
+        elif self.state.phase == "War":
+            moves = ai_reinforce(self.state)
+            node, output = self.informed_search(Informed.GREEDY)
+            print('========================> THE OUTPUT IS', output)
+            if output == 'success':
+                attack = self.back_track(node)
+                moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
+            return self.return_format(moves)
+        return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def A_star_agent(self):
-        moves = self.ai_reinforce()
-        node, output = self.informed_search(Informed.A_STAR_NORMAL)
-        if output == 'success':
+        if self.state.phase == "Occupation":
+            return self.occupy()
+        elif self.state.phase == "Reinforce Countries":
+            return self.return_format(ai_reinforce(self.state))
+        elif self.state.phase == "War":
+            moves = ai_reinforce(self.state)
+            node, output = self.informed_search(Informed.A_STAR_NORMAL)
+            print('========================> THE OUTPUT IS', output)
+            # if output == 'success':
             attack = self.back_track(node)
-            moves.append(("attack", attack[0], attack[1], 0))
-        return self.return_format(moves)
+            moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
+            return self.return_format(moves)
+        return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def A_star_realtime_agent(self):
-        moves = self.ai_reinforce()
-        node, _ = self.informed_search(Informed.A_STAR_REALTIME)
-        attack = self.back_track(node)
-        moves.append(("attack", attack[0], attack[1], 0))
-        return moves
+        if self.state.phase == "Occupation":
+            return self.occupy()
+        elif self.state.phase == "Reinforce Countries":
+            return self.return_format(ai_reinforce(self.state))
+        elif self.state.phase == "War":
+            moves = ai_reinforce(self.state)
+            node, output = self.informed_search(Informed.A_STAR_REALTIME)
+            print('========================> THE OUTPUT IS', output)
+            attack = self.back_track(node)
+            moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
+            return self.return_format(moves)
+        return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def back_track(self, node):
         steps = list()
@@ -365,25 +383,30 @@ class Agent:
         step = steps[-1].split('_')
         attack = []
         for string in step:
-            attack.append(int(string))
+            attack.append(string)
         return attack
 
-    def ai_reinforce(self):
-        search_cities = self.state.dict_player_cities[self.state.current_player]
-        city_bsr = {}
-        for city in search_cities:
-            try:
-                city_bsr[city] = self.function.BSR(self.state, city, self.state.opponent_adj_list[city])
-            except:
-                continue
-        city_NBSR = self.function.NBSR(city_bsr)
-        moves = []
-        for id_ in city_NBSR:
-            val = min(ceil(city_NBSR[id_] * self.state.unassigned_units), self.state.unassigned_units)
-            self.state.unassigned_units -= val
-            self.state.dict_city_troops[id_] += val
-            moves.append(("reinforce", id_ , 0, val))
-        return moves
+def ai_reinforce(state):
+    function = Functions()
+    search_cities = state.dict_player_cities[state.current_player]
+    city_bsr = {}
+    for city in search_cities:
+        try:
+            city_bsr[city] = function.BSR(state, city, state.opponent_adj_list[city])
+        except:
+            continue
+    city_NBSR = function.NBSR(city_bsr)
+    sorted_NBSR = sorted(city_NBSR.items(), key=operator.itemgetter(1), reverse=True)
+    moves = []
+    for tup in sorted_NBSR:
+        if state.unassigned_units == 0:
+            return moves
+        val = ceil(tup[1] * state.unassigned_units)
+        if val != 0:
+            state.unassigned_units -= val
+            state.dict_city_troops[tup[0]] += val
+            moves.append(("reinforce", tup[0] , 0, val))
+    return moves
 
 
 class Functions:
@@ -438,7 +461,7 @@ class Functions:
         target_attack = []
         attack = []
         for key in nbsr:
-            if nbsr[key] >= 1/3:
+            if nbsr[key] >= 1/10:
                 target_attack.append(key)
                 source = self.best_one_can_attack(state, key)
                 if source != 0:
@@ -491,11 +514,17 @@ class Problem:
         if bsr1 == 0 and bsr2 == 0:
             nbsr1 = 0.5 # nbsr2 = 0.5
         else:
-            nbsr1 = bsr1 / (bsr1 + bsr2)
-            # nbsr2 = bsr2 / (bsr1 + bsr2)
+            nbsr1 = bsr1 / (bsr1 + bsr2)    # nbsr2 = bsr2 / (bsr1 + bsr2)
+
         val = next_state.dict_city_troops[attack[0]]
-        next_state.dict_city_troops[attack[0]] = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1
+        val1 = floor(val * nbsr1) if floor(val * nbsr1) >= 1 else 1
+        if val > val1:
+            next_state.dict_city_troops[attack[0]] = val1
+        else: # val = val1
+            next_state.dict_city_troops[attack[0]] = val1 - 1
         next_state.dict_city_troops[attack[1]] = val - next_state.dict_city_troops[attack[0]]
+        next_state.unassigned_units = max(len(next_state.dict_player_cities[next_state.current_player]) // 3, 3)
+        ai_reinforce(next_state)
         return next_state, cost
 
     def goal_test(self, state):
