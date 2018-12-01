@@ -82,7 +82,8 @@ export function BoardWithOptions(gameOptions) {
         if (move.name === "attack") {
           let sourceId = move.sourceId;
           let destId = move.destId;
-          this.props.moves.attack(sourceId, destId);
+          let numSoldiers = move.numSoldiers;
+          this.props.moves.attack(sourceId, destId, numSoldiers);
         } else if (move.name === "reinforce") {
           let sourceId = move.sourceId;
           let numSoldiers = move.numSoldiers;
@@ -132,8 +133,14 @@ export function BoardWithOptions(gameOptions) {
           if (this.state.selectedCountry === id)
             this.setState({...this.state, selectedCountry: null});
           else if(this._canAttack(this.state.selectedCountry, id)) {
+
+            // automatically move all but one unit to the country being attackted
+            const numSoldiers = this.props.G.countries[this.state.selectedCountry].soldiers - this.props.G.countries[id].soldiers - 1;
+
             // perform attack
-            this.props.moves.attack(this.state.selectedCountry, id);
+            this.props.moves.attack(this.state.selectedCountry, id, numSoldiers);
+
+            // reset selected country
             this.setState({...this.state, selectedCountry: null});
           } else {
             alert("you can't attack " + gameOptions.gameMap.countryName[id])

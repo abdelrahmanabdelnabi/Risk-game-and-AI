@@ -12,7 +12,7 @@ function IsVictory(countries) {
 
 const gameOptions = {
   gameMap: worldMap, // to use the US map, import it and use it in place of worldMap here
-  players: [{name: "human", isAI: false}, {name: "passive", isAI: true}],
+  players: [{name: "human", isAI: false}, {name: "aggressive", isAI: true}],
   unitsPerPlayer: 27,
   useDice: false,
   // startWithRandomCountries: false
@@ -63,9 +63,9 @@ const RiskGame = Game({
       return { ...G, countries, unassignedUnits };
     },
 
-    attack(G, ctx, sourceId, destId) {
-      // TODO
+    attack(G, ctx, sourceId, destId, numSoldiers) {
       // assuming the board component validates the attack move
+      console.log(numSoldiers)
 
       const countries = {...G.countries};
 
@@ -77,8 +77,8 @@ const RiskGame = Game({
         if ( diff >= 2) {
           // subtract the number of soldiers of the defending country from the attacking country,
           // and move all but one of the soldiers of the attacking country to the defeated country.
-          countries[sourceId].soldiers = 1;
-          countries[destId].soldiers = diff - 1;
+          countries[sourceId].soldiers = diff - numSoldiers;
+          countries[destId].soldiers = numSoldiers;
           countries[destId].owner = countries[sourceId].owner;
           return {...G, countries};
         }
