@@ -1,7 +1,8 @@
 import { Game } from 'boardgame.io/core';
 import { Client } from 'boardgame.io/react';
-import { RiskGameBoard } from './RiskGameBoard';
+import { BoardWithOptions } from './RiskGameBoard';
 import { worldMap } from './maps/worldmap';
+import { usMap } from './maps/usmap';
 
 // Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
@@ -10,10 +11,11 @@ function IsVictory(countries) {
 }
 
 const gameOptions = {
-  gameMap: worldMap,
-  players: ["human", "greedy"],
-  unitsPerPlayer: 25,
-  useDice: false
+  gameMap: worldMap, // to use the US map, import it and use it in place of worldMap here
+  players: [{name: "human", isAI: false}, {name: "passive", isAI: true}],
+  unitsPerPlayer: 27,
+  useDice: false,
+  // startWithRandomCountries: false
 };
 
 const numPlayers = gameOptions.players.length;
@@ -140,7 +142,7 @@ const RiskGame = Game({
   },
 });
 
-const App = Client({ game: RiskGame, board: RiskGameBoard, gameOptions: gameOptions });
+const App = Client({ game: RiskGame, board: BoardWithOptions(gameOptions), gameOptions: gameOptions });
 
 export default App;
 export const AI_SERVER_REQUEST_URL = "http://localhost:5000/solve";
