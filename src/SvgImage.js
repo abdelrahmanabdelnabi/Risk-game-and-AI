@@ -40,7 +40,7 @@ export class SvgImage extends React.Component {
 
       var attackState = AttackingStateEnum.normal;
 
-      if(this.props.attackingCountry === idNum)
+      if(+this.props.attackingCountry === idNum)
         attackState = AttackingStateEnum.attacking;
       else if(this.props.defendingCountries.indexOf(+idNum) > -1)
         attackState = AttackingStateEnum.being_attacked;
@@ -54,7 +54,7 @@ export class SvgImage extends React.Component {
     return (
     <svg width="895" height="532" version="1.0" data-revision="112" style={{overflow: "visible"}} >
 
-<rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
+    <rect x="0.01495404" y="0.05651855" width="894.9685" height="531.9553" rx="0" ry="0" style={{fill: "#374548", fillOpacity: 1}} id="obj1"></rect>
       <g>
         {paths}
      </g>
