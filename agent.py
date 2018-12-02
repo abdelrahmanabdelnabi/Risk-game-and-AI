@@ -220,18 +220,24 @@ class Agent:
     def minimax(self):
       node = Node(self.state, None, None, 0, 0)
       child, _ = maximize(self, node, -inf, inf)
-      return child
+      attack = self.back_track(node)
+      moves = ("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1]))
+      return self.return_format(moves)
 
-    def _minimize(self, node, alpha, beta):
-      if self.problem.goal_test(node.state):
-        return None, inf
+    def _minimize(self, node, alpha, beta, depth):
+      goal_test = self.problem.minimax_goal_test(node.state)
+      if  goal_test != 0:
+        return None, goal_test
+
+      if depth >= 10:
+        return node, self.problem.eval(node.state)
 
       minChild, minUtil = None, inf
 
       for action in self.problem.get_actions(node.state):
         child = self.problem.child_node(node, action)
 
-        _, util = self._maximize(child, alpha, beta)
+        _, util = self._maximize(child, alpha, beta, depth + 1)
 
         if util < minUtil:
           minChild, minUtil = child, util
@@ -244,15 +250,19 @@ class Agent:
 
       return minChild, minUtil
 
-    def _maximize(self, node, alpha, beta):
-      if self.problem.goal_test(self.state):
-        return None, self.problem.eval(self.state)
+    def _maximize(self, node, alpha, beta, depth):
+      goal_test = self.problem.minimax_goal_test(node.state)
+      if  goal_test != 0:
+        return None, goal_test
+
+      if depth >= 10:
+        return node, self.problem.eval(node.state)
 
       maxChild, maxUtil = None, -inf
 
       for action in self.problem.get_actions(node.state):
         child = self.problem.child_node(node, action)
-         _, util = self._minimize(child, alpha, beta)
+         _, util = self._minimize(child, alpha, beta, depth + 1)
 
          if util > maxUtil:
            maxChild, maxUtil = child, util
@@ -547,5 +557,22 @@ class Problem:
         return Node(next_state, node, action, node.path_cost + cost, node.depth + 1)
 
     def eval(self, state):
-      # TODO
-      return 0
+      my_soldiers_count = sum(state.get_troops_of_cities(state.dict_player_cities[state.current_player]))
+      opponent_soldiers_count = sum(state.get_troops_of_cities(state.get_opponent_cities()))
+
+      my_cities_count = len(state.dict_player_cities[state.current_player]))
+      opponent_cities_count = len(state.get_opponent_cities())
+
+      return 2 * (0.5 * my_soldiers_count / (my_soldiers_count + opponent_soldiers_count) + 0.5 * my_cities_count / (my_cities_count + opponent_cities_count) ) - 1
+
+      def minimax_goal_test(self, state):
+        '''
+        returns 1 if current player wins, -1 if opponent wins, 0 otherwise
+        '''
+        if len(state.dict_player_cities) > 1:
+          return 0
+        if state.current_player in state.dict_player_cities:
+          return 1
+        return -1
+
+
