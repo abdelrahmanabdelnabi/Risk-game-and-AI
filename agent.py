@@ -5,9 +5,11 @@ import numpy as np
 import operator
 from collections import defaultdict
 from enum import Enum
-from math import ceil, floor, inf
+from math import ceil, floor
 from heap import Heap
 from copy import deepcopy
+
+inf = 1000000000
 
 # Flags used later, defined by Enums here
 class Player(Enum):
@@ -219,18 +221,30 @@ class Agent:
         return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def minimax(self):
-      node = Node(self.state, None, None, 0, 0)
-      child, _ = maximize(self, node, -inf, inf)
-      attack = self.back_track(node)
-      moves = ("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1]))
-      return self.return_format(moves)
+      if self.state.phase == "Occupation":
+        return self.occupy()
+      elif self.state.phase == "Reinforce Countries":
+        return self.return_format(ai_reinforce(self.state, 1))
+      elif self.state.phase == "War":
+        moves = ai_reinforce(self.state, self.state.unassigned_units)
+        node = Node(self.state, None, None, 0, 0)
+        child, _ = self._maximize(node, -inf, inf, 0)
+        attack = self.back_track(child)
+        moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
+        return self.return_format(moves)
+      return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
     def _minimize(self, node, alpha, beta, depth):
+      print("minimize")
       goal_test = self.problem.minimax_goal_test(node.state)
       if  goal_test != 0:
+        print("min goal test true")
         return None, goal_test
 
-      if depth >= 10:
+      if self.problem.leaf_test(node.state):
+        return node, self.problem.eval(node.state)
+
+      if depth >= 5:
         return node, self.problem.eval(node.state)
 
       minChild, minUtil = None, inf
@@ -252,27 +266,41 @@ class Agent:
       return minChild, minUtil
 
     def _maximize(self, node, alpha, beta, depth):
+      print("maximize")
+
       goal_test = self.problem.minimax_goal_test(node.state)
       if  goal_test != 0:
+        print("max goal test true")
         return None, goal_test
 
-      if depth >= 10:
+      print("1")
+
+      if self.problem.leaf_test(node.state):
         return node, self.problem.eval(node.state)
+
+      if depth >= 5:
+        print("depth limit reached")
+        return node, self.problem.eval(node.state)
+
+      print("2")
 
       maxChild, maxUtil = None, -inf
 
+      print(self.problem.get_actions(node.state))
+
       for action in self.problem.get_actions(node.state):
+        print("3")
         child = self.problem.child_node(node, action)
-         _, util = self._minimize(child, alpha, beta, depth + 1)
+        _, util = self._minimize(child, alpha, beta, depth + 1)
 
-         if util > maxUtil:
-           maxChild, maxUtil = child, util
+        if util > maxUtil:
+          maxChild, maxUtil = child, util
 
-          if maxUtil >= beta:
-            break
+        if maxUtil >= beta:
+          break
 
-          if maxUtil > alpha:
-            alpha = maxUtil
+        if maxUtil > alpha:
+          alpha = maxUtil
 
       return maxChild, maxUtil
 
@@ -391,12 +419,13 @@ class Agent:
 
     def back_track(self, node):
         steps = list()
+        attack = []
         while node.parent != None:
             steps.append(node.action)
             node = node.parent
-        step = steps[-1].split('_')
-        attack = []
-        for string in step:
+        if len(steps) != 0:
+          step = steps[-1].split('_')
+          for string in step:
             attack.append(string)
         return attack
 
@@ -564,19 +593,24 @@ class Problem:
       my_soldiers_count = sum(state.get_troops_of_cities(state.dict_player_cities[state.current_player]))
       opponent_soldiers_count = sum(state.get_troops_of_cities(state.get_opponent_cities()))
 
-      my_cities_count = len(state.dict_player_cities[state.current_player]))
+      my_cities_count = len(state.dict_player_cities[state.current_player])
       opponent_cities_count = len(state.get_opponent_cities())
 
-      return 2 * (0.5 * my_soldiers_count / (my_soldiers_count + opponent_soldiers_count) + 0.5 * my_cities_count / (my_cities_count + opponent_cities_count) ) - 1
+      return 2 * (0.1 * my_soldiers_count / (my_soldiers_count + opponent_soldiers_count) + 0.9 * my_cities_count / (my_cities_count + opponent_cities_count) ) - 1
 
-      def minimax_goal_test(self, state):
-        '''
-        returns 1 if current player wins, -1 if opponent wins, 0 otherwise
-        '''
-        if len(state.dict_player_cities) > 1:
-          return 0
-        if state.current_player in state.dict_player_cities:
-          return 1
-        return -1
+    def minimax_goal_test(self, state):
+      '''
+      returns 1 if current player wins, -1 if opponent wins, 0 otherwise
+      '''
+      if len(state.dict_player_cities) > 1:
+        return 0
+      if state.current_player in state.dict_player_cities:
+        return 1
+      return -1
+
+    def leaf_test(self, state):
+      if len(self.get_actions(state)) == 0:
+        return True
+      return False
 
 
