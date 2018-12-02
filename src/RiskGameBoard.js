@@ -112,6 +112,10 @@ export function BoardWithOptions(gameOptions) {
 
     // This handler gets called whenever a territory is clicked
     handleClick(territoryId) {
+      if (gameOptions.players[this.props.ctx.currentPlayer].isAI) {
+        alert("Hold it, human!");
+        return;
+      }
       const id = territoryId.split("_")[1];
       const type = territoryId.split("_")[0];
 
@@ -208,29 +212,32 @@ export function BoardWithOptions(gameOptions) {
           </div>
           <div>
             <ul className="legend">
-              <li><span className="player0"></span> {gameOptions.players[0].name}</li>
-              <li><span className="player1"></span> {gameOptions.players[1].name}</li>
+              <li><span className="player0"></span> Player 0: {gameOptions.players[0].name}</li>
+              <li><span className="player1"></span> Player 1: {gameOptions.players[1].name}</li>
           </ul>
           </div>
         </li>
         <li>
           <div style={{margin: "20px 20px 20px 20px"}}>
-            <h3>Current Player: {this.props.ctx.currentPlayer}</h3>
             {
               this.props.G.unassignedUnits[this.props.ctx.currentPlayer] > 0 &&
-              <h3>Assign your units!</h3>
+              <h2 style={{color:"orange"}} className="animated fadeIn">Assign your units!</h2>
             }
+            {
+              this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
+              <h2 style={{color:"red"}} className="animated fadeIn">Attack!</h2>
+            }
+            <h3>Current Player: {this.props.ctx.currentPlayer}</h3>
             <h3>Unassigned Units: {this.props.G.unassignedUnits[this.props.ctx.currentPlayer]}</h3>
             <h3>Current Phase: {this.props.ctx.phase}</h3>
             {
               this.props.ctx.phase === 'War' &&
               <h3>Selected Country: {gameMap.countryName[this.state.selectedCountry]}</h3>
             }
-
-              {
-                this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
-                <a href="#" onClick={() => this.endTurnHandler()} class="square_btn">END TURN</a>
-              }
+            {
+              this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
+              <a href="#" onClick={() => this.endTurnHandler()} className="square_btn">END YOUR TURN</a>
+            }
             </div>
           </li>
         </ul>
