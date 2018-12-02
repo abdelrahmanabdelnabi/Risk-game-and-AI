@@ -27,3 +27,18 @@
 /* your colors */
 .legend .player0 { background-color: #ff0000; }
 .legend .player1 { background-color: #0000ff; }
+
+.square_btn {
+    display: inline-block;
+    padding: 0.3em 1em;
+    text-decoration: none;
+    color: #ff371c;
+    border: solid 2px #ff371c;
+    border-radius: 3px;
+    transition: .4s;
+}
+
+.square_btn:hover {
+    background: #ff371c;
+    color: #0f0802;
+}

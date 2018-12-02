@@ -229,12 +229,8 @@ export function BoardWithOptions(gameOptions) {
 
               {
                 this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
-                <p>Attack your enemies or <button onClick={() => this.endTurnHandler()}>End Turn</button></p>
+                <a href="#" onClick={() => this.endTurnHandler()} class="square_btn">END TURN</a>
               }
-
-              <span className="dice dice-3" title="Dice 1"></span>
-              <span className="dice dice-6" title="Dice 2"></span>
-              <span className="dice dice-4" title="Dice 3"></span>
             </div>
           </li>
         </ul>
