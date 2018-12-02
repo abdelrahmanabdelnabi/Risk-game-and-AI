@@ -338,16 +338,15 @@ class Agent:
                         child_total_path = child.path_cost + child_path_to_goal
                         frontier_heap.add(child, priority=child_total_path)
                 else:
-                    print('=========> COST =', cost)
                     heap_limit.add(node, priority=cost)
 
     def greedy_agent(self):
         if self.state.phase == "Occupation":
             return self.occupy()
         elif self.state.phase == "Reinforce Countries":
-            return self.return_format(ai_reinforce(self.state))
+            return self.return_format(ai_reinforce(self.state, 1))
         elif self.state.phase == "War":
-            moves = ai_reinforce(self.state)
+            moves = ai_reinforce(self.state, self.state.unassigned_units)
             node, output = self.informed_search(Informed.GREEDY)
             print('========================> THE OUTPUT IS', output)
             if output == 'success':
@@ -360,9 +359,9 @@ class Agent:
         if self.state.phase == "Occupation":
             return self.occupy()
         elif self.state.phase == "Reinforce Countries":
-            return self.return_format(ai_reinforce(self.state))
+            return self.return_format(ai_reinforce(self.state, 1))
         elif self.state.phase == "War":
-            moves = ai_reinforce(self.state)
+            moves = ai_reinforce(self.state, self.state.unassigned_units)
             node, output = self.informed_search(Informed.A_STAR_NORMAL)
             print('========================> THE OUTPUT IS', output)
             # if output == 'success':
@@ -375,9 +374,9 @@ class Agent:
         if self.state.phase == "Occupation":
             return self.occupy()
         elif self.state.phase == "Reinforce Countries":
-            return self.return_format(ai_reinforce(self.state))
+            return self.return_format(ai_reinforce(self.state, 1))
         elif self.state.phase == "War":
-            moves = ai_reinforce(self.state)
+            moves = ai_reinforce(self.state, self.state.unassigned_units)
             node, output = self.informed_search(Informed.A_STAR_REALTIME)
             print('========================> THE OUTPUT IS', output)
             attack = self.back_track(node)
@@ -396,7 +395,7 @@ class Agent:
             attack.append(string)
         return attack
 
-def ai_reinforce(state):
+def ai_reinforce(state, unassigned_units):
     function = Functions()
     search_cities = state.dict_player_cities[state.current_player]
     city_bsr = {}
@@ -409,11 +408,11 @@ def ai_reinforce(state):
     sorted_NBSR = sorted(city_NBSR.items(), key=operator.itemgetter(1), reverse=True)
     moves = []
     for tup in sorted_NBSR:
-        if state.unassigned_units == 0:
+        if unassigned_units == 0:
             return moves
-        val = ceil(tup[1] * state.unassigned_units)
+        val = ceil(tup[1] * unassigned_units)
         if val != 0:
-            state.unassigned_units -= val
+            unassigned_units -= val
             state.dict_city_troops[tup[0]] += val
             moves.append(("reinforce", tup[0] , 0, val))
     return moves
@@ -534,7 +533,7 @@ class Problem:
             next_state.dict_city_troops[attack[0]] = val1 - 1
         next_state.dict_city_troops[attack[1]] = val - next_state.dict_city_troops[attack[0]]
         next_state.unassigned_units = max(len(next_state.dict_player_cities[next_state.current_player]) // 3, 3)
-        ai_reinforce(next_state)
+        ai_reinforce(next_state, next_state.unassigned_units)
         return next_state, cost
 
     def goal_test(self, state):
