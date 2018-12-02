@@ -1,5 +1,7 @@
 import React from 'react';
 import { SvgImage } from './SvgImage';
+import { worldMap } from './maps/worldmap';
+import { usMap } from './maps/usmap';
 import axios from 'axios';
 import {AI_SERVER_REQUEST_URL} from './App';
 import './RiskGameBoard.css';
@@ -7,6 +9,17 @@ import './dice.css'
 import './soldiersNumbers.css';
 
 export function BoardWithOptions(gameOptions) {
+  const mapName = gameOptions.gameMap;
+  let gameMap = {};
+  switch (mapName) {
+    case 'World':
+      gameMap = worldMap;
+      break;
+    case 'USA':
+      gameMap = usMap;
+      break;
+    default: gameMap = worldMap;
+  }
 
   return class RiskGameBoard extends React.Component {
 
@@ -42,7 +55,7 @@ export function BoardWithOptions(gameOptions) {
 
       const currentPlayer = gameOptions.players[+this.props.ctx.currentPlayer];
       if (currentPlayer.isAI) {
-        const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": currentPlayer.name, "adjacencyList": gameOptions.gameMap.adjacencyList};
+        const data = {"G": this.props.G, "ctx": this.props.ctx, "agent": currentPlayer.name, "adjacencyList": gameMap.adjacencyList};
         axios({
           url: `${AI_SERVER_REQUEST_URL}`,
           method: "post",
@@ -100,6 +113,10 @@ export function BoardWithOptions(gameOptions) {
 
     // This handler gets called whenever a territory is clicked
     handleClick(territoryId) {
+      if (gameOptions.players[this.props.ctx.currentPlayer].isAI) {
+        alert("Hold it, human!");
+        return;
+      }
       const id = territoryId.split("_")[1];
       const type = territoryId.split("_")[0];
 
@@ -126,7 +143,7 @@ export function BoardWithOptions(gameOptions) {
           if(this._canReinforce(id)) {
             this.props.moves.reinforceCountry(id, 1);
           } else {
-            alert("you can't reinforce " + gameOptions.gameMap.countryName[id] + ". You don't own this country.");
+            alert("you can't reinforce " + gameMap.countryName[id] + ". You don't own this country.");
           }
 
         } else if (this.state.selectedCountry) {
@@ -143,14 +160,14 @@ export function BoardWithOptions(gameOptions) {
             // reset selected country
             this.setState({...this.state, selectedCountry: null});
           } else {
-            alert("you can't attack " + gameOptions.gameMap.countryName[id])
+            alert("you can't attack " + gameMap.countryName[id])
           }
         } else {
           // check if valid selection first
           if (this.props.G.countries[id].owner === this.props.ctx.currentPlayer)
             this.setState({...this.state, selectedCountry: id})
           else {
-            alert("you can't attack with " + gameOptions.gameMap.countryName[id] + ". You don't own this country.");
+            alert("you can't attack with " + gameMap.countryName[id] + ". You don't own this country.");
           }
         }
       }
@@ -166,7 +183,7 @@ export function BoardWithOptions(gameOptions) {
     }
 
     _canAttack(sourceId, destId) {
-      const isNeighbor = gameOptions.gameMap.adjacencyList[sourceId].indexOf(+destId) > -1;
+      const isNeighbor = gameMap.adjacencyList[sourceId].indexOf(+destId) > -1;
       const isEnemy = this.props.G.countries[sourceId].owner !== this.props.G.countries[destId].owner;
       return isNeighbor && isEnemy;
     }
@@ -177,7 +194,7 @@ export function BoardWithOptions(gameOptions) {
         return [];
 
       const currPlayer = this.props.ctx.currentPlayer;
-      const neighbors = gameOptions.gameMap.adjacencyList[attackingCountry];
+      const neighbors = gameMap.adjacencyList[attackingCountry];
       return neighbors.filter(neighbor => this.props.G.countries[neighbor].owner !== currPlayer);
     }
 
@@ -197,43 +214,41 @@ export function BoardWithOptions(gameOptions) {
         <li>
           <div style={{margin: "20px 20px 20px 20px"}}>
             <SvgImage countries={this.props.G.countries} attackingCountry={this.state.selectedCountry}
-            defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={gameOptions.gameMap}
+            defendingCountries={this._getDefendingCountries(this.state.selectedCountry)} map={gameMap}
             onClick={(i) => this.handleClick(i)}/>
           </div>
           <div>
             <ul className="legend">
-              <li><span className="player0"></span> Player 0</li>
-              <li><span className="player1"></span> Player 1</li>
+              <li><span className="player0"></span> Player 0: {gameOptions.players[0].name}</li>
+              <li><span className="player1"></span> Player 1: {gameOptions.players[1].name}</li>
           </ul>
           </div>
         </li>
         <li>
           <div style={{margin: "20px 20px 20px 20px"}}>
-            <h3>Current Player: {this.props.ctx.currentPlayer}</h3>
             {
               this.props.G.unassignedUnits[this.props.ctx.currentPlayer] > 0 &&
-              <h3>Assign your units!</h3>
+              <h2 style={{color:"orange"}} className="animated fadeIn">Assign your units!</h2>
             }
+            {
+              this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
+              <h2 style={{color:"red"}} className="animated fadeIn">Attack!</h2>
+            }
+            <h3>Current Player: {this.props.ctx.currentPlayer}</h3>
             <h3>Unassigned Units: {this.props.G.unassignedUnits[this.props.ctx.currentPlayer]}</h3>
             <h3>Current Phase: {this.props.ctx.phase}</h3>
             {
               this.props.ctx.phase === 'War' &&
-              <h3>Selected Country: {gameOptions.gameMap.countryName[this.state.selectedCountry]}</h3>
+              <h3>Selected Country: {gameMap.countryName[this.state.selectedCountry]}</h3>
             }
-
             {
               this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
-              <p>Attack your enemies or <button onClick={() => this.endTurnHandler()}>End Turn</button></p>
+              <a href="#" onClick={() => this.endTurnHandler()} className="square_btn">END YOUR TURN</a>
             }
-
             {
               this.props.ctx.gameover &&
               <h1>Winner: player {this.props.ctx.gameover.winner}</h1>
             }
-
-              <span className="dice dice-3" title="Dice 1"></span>
-              <span className="dice dice-6" title="Dice 2"></span>
-              <span className="dice dice-4" title="Dice 3"></span>
             </div>
           </li>
         </ul>
