@@ -245,6 +245,10 @@ export function BoardWithOptions(gameOptions) {
               this.props.ctx.phase === 'War' && this.props.G.unassignedUnits[this.props.ctx.currentPlayer] === 0 &&
               <a href="#" onClick={() => this.endTurnHandler()} className="square_btn">END YOUR TURN</a>
             }
+            {
+              this.props.ctx.gameover &&
+              <h1>Winner: player {this.props.ctx.gameover.winner}</h1>
+            }
             </div>
           </li>
         </ul>

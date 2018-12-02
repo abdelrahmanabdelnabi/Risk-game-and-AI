@@ -475,7 +475,7 @@ class Functions:
         target_attack = []
         attack = []
         for key in nbsr:
-            if nbsr[key] >= 1/10:
+            if nbsr[key] >= 0:
                 target_attack.append(key)
                 source = self.best_one_can_attack(state, key)
                 if source != 0:

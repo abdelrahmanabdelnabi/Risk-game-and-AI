@@ -3,9 +3,15 @@ import { worldMap } from './maps/worldmap';
 import { usMap } from './maps/usmap';
 
 // Return true if `countries` is in a winning configuration.
+function uniques(array) {
+  return Array.from(new Set(array));;
+}
+
+// Return true if `countries` is in a winning configuration.
 function IsVictory(countries) {
   // TODO
-  return false;
+  const ownersList = Object.keys(countries).map((key) => countries[key].owner)
+  return uniques(ownersList).length === 1;
 }
 
 export function createGame(gameOptions) {
