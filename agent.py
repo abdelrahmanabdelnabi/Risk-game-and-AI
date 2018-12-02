@@ -1,3 +1,4 @@
+from __future__ import division
 import json
 import ast
 import numpy as np
@@ -257,8 +258,11 @@ class Agent:
                 if informed_type == Informed.GREEDY:
                     return node, "empty, greedy"
                 else:
-                    _, min_ = heap_limit.pop()
-                    return min_, "empty, reached limit"
+                    if not heap_limit.pq:
+                        return None, "empty, failure"
+                    else:
+                        _, min_ = heap_limit.pop()
+                        return min_, "empty, reached limit"
 
             cost, node = frontier_heap.pop()
             if self.problem.goal_test(node.state):
@@ -305,9 +309,9 @@ class Agent:
             moves = ai_reinforce(self.state, self.state.unassigned_units)
             node, output = self.informed_search(Informed.A_STAR_NORMAL)
             print('========================> THE OUTPUT IS', output)
-            # if output == 'success':
-            attack = self.back_track(node)
-            moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
+            if node != None:
+                attack = self.back_track(node)
+                moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
             return self.return_format(moves)
         return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
@@ -320,8 +324,9 @@ class Agent:
             moves = ai_reinforce(self.state, self.state.unassigned_units)
             node, output = self.informed_search(Informed.A_STAR_REALTIME)
             print('========================> THE OUTPUT IS', output)
-            attack = self.back_track(node)
-            moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
+            if node != None:
+                attack = self.back_track(node)
+                moves.append(("attack", attack[0], attack[1], self.redistribute_troops(attack[0], attack[1])))
             return self.return_format(moves)
         return self.return_format([("can't find any moves", 0, 0, self.state.unassigned_units)])
 
