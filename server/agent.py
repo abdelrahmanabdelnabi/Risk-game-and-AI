@@ -273,8 +273,6 @@ class Agent:
         print("max goal test true")
         return None, goal_test
 
-      print("1")
-
       if self.problem.leaf_test(node.state):
         return node, self.problem.eval(node.state)
 
@@ -282,14 +280,11 @@ class Agent:
         print("depth limit reached")
         return node, self.problem.eval(node.state)
 
-      print("2")
-
       maxChild, maxUtil = None, -inf
 
       print(self.problem.get_actions(node.state))
 
       for action in self.problem.get_actions(node.state):
-        print("3")
         child = self.problem.child_node(node, action)
         _, util = self._minimize(child, alpha, beta, depth + 1)
 
