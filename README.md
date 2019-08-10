@@ -1,44 +1,48 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# RISK AI Game
+This project is a simplified browser based implementation including several AI agents for the popular game "Risk".
 
-## Available Scripts
+## Features
+The game supports two modes. Human vs AI (playing mode) and AI vs AI (simulation mode).
 
-In the project directory, you can run:
+The game starts with an occupation phase players take turns selecting the countries they would like to occupy, positioning one unit at a time.
 
-### `npm start`
+Then the war phase starts where players can attack other players based on the rules of the game.
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### AI Agents
+We implemented several AI agents which you can choose to play against. The agents differ in their strategy and state space search algorithm. Here are the agents we implemented:
+* A* search
+* realtime A* search
+* Minimax
+* Greedy
+* Agressive
+* Pacifist
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+We used the __Border Security Ratio__ heuristic from [this paper](https://project.dke.maastrichtuniversity.nl/games/files/bsc/Hahn_Bsc-paper.pdf) as the heuristic for the A* and minimax agents.
+## Technologies
+The game is implemented using React.js for the frontend side and python scripts for the AI agents with a simple flask server for client server communication. We use boardgame.io for managing and defining game state, moves, rules and transitions.
 
-### `npm test`
+## Demo
+![demo gif](risk-demo.gif)
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Setup
+Clone the repo, then:
 
-### `npm run build`
+To start the client run
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+cd Risk-game-and-AI/client
+npm i
+npm start
+```
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+To start the server
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+cd server
 
-### `npm run eject`
+# install the python dependencies
+pip install numpy flask flask-cors
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+# run the server
+flask run
+```
